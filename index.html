@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SMX LiveBoard - Dashboard de monitoramento de sistema em tempo real">
+    <title>SMX LiveBoard - Dashboard de Monitoramento</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" href="assets/icon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <path d="M9 9h6v6H9z"/>
+                        <path d="M9 1v6"/>
+                        <path d="M15 1v6"/>
+                        <path d="M9 17v6"/>
+                        <path d="M15 17v6"/>
+                        <path d="M1 9h6"/>
+                        <path d="M17 9h6"/>
+                        <path d="M1 15h6"/>
+                        <path d="M17 15h6"/>
+                    </svg>
+                </div>
+                <span>SMX LiveBoard</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-controls">
+                <button class="control-btn" id="refreshBtn" title="Atualizar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <polyline points="1 20 1 14 7 14"/>
+                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                    </svg>
+                </button>
+                <button class="control-btn" id="fullscreenBtn" title="Tela Cheia">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Desconectado</span>
+            </div>
+            <div class="current-time" id="currentTime">
+                --:--:--
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            <div class="loading-spinner"></div>
+            <p>Carregando dados do sistema...</p>
+            <p style="font-size: 0.9rem; color: #999; margin-top: 1rem;">
+                Verificando conexão com o backend...
+            </p>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard" id="dashboardContent" style="display: none;">
+            <!-- Cards de Resumo -->
+            <div class="summary-cards">
+                <div class="summary-card cpu-card">
+                    <div class="summary-card-header">
+                        <span class="summary-card-title">CPU</span>
+                        <div class="summary-card-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="4" y="4" width="16" height="16" rx="2"/>
+                                <rect x="9" y="9" width="6" height="6"/>
+                                <line x1="9" y1="1" x2="9" y2="4"/>
+                                <line x1="15" y1="1" x2="15" y2="4"/>
+                                <line x1="9" y1="20" x2="9" y2="23"/>
+                                <line x1="15" y1="20" x2="15" y2="23"/>
+                                <line x1="20" y1="9" x2="23" y2="9"/>
+                                <line x1="20" y1="14" x2="23" y2="14"/>
+                                <line x1="1" y1="9" x2="4" y2="9"/>
+                                <line x1="1" y1="14" x2="4" y2="14"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="summary-card-value" id="cpuUsage">
+                        0%
+                    </div>
+                    <div class="summary-card-label">Uso atual</div>
+                    <div class="summary-card-progress">
+                        <div class="summary-card-progress-bar" id="cpuProgressBar"></div>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas id="cpuSparkline" width="120" height="30"></canvas>
+                    </div>
+                </div>
+
+                <div class="summary-card ram-card">
+                    <div class="summary-card-header">
+                        <span class="summary-card-title">Memória</span>
+                        <div class="summary-card-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="9" y1="9" x2="15" y2="15"/>
+                                <line x1="15" y1="9" x2="9" y2="15"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="summary-card-value" id="ramUsage">
+                        0 B
+                    </div>
+                    <div class="summary-card-label" id="ramTotal">
+                        de 0 B
+                    </div>
+                    <div class="summary-card-progress">
+                        <div class="summary-card-progress-bar" id="ramProgressBar"></div>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas id="ramSparkline" width="120" height="30"></canvas>
+                    </div>
+                </div>
+
+                <div class="summary-card disk-card">
+                    <div class="summary-card-header">
+                        <span class="summary-card-title">Disco</span>
+                        <div class="summary-card-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="summary-card-value" id="diskUsage">
+                        0 B
+                    </div>
+                    <div class="summary-card-label" id="diskTotal">
+                        de 0 B
+                    </div>
+                    <div class="summary-card-progress">
+                        <div class="summary-card-progress-bar" id="diskProgressBar"></div>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas id="diskSparkline" width="120" height="30"></canvas>
+                    </div>
+                </div>
+
+                <div class="summary-card network-card">
+                    <div class="summary-card-header">
+                        <span class="summary-card-title">Rede</span>
+                        <div class="summary-card-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="2" y1="12" x2="22" y2="12"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="summary-card-value" id="networkStatus">
+                        Conectado
+                    </div>
+                    <div class="summary-card-label" id="networkSpeed">
+                        -- Mbps
+                    </div>
+                    <div class="network-details">
+                        <div class="network-item">
+                            <span class="network-label">↓</span>
+                            <span class="network-value" id="downloadSpeed">-- KB/s</span>
+                        </div>
+                        <div class="network-item">
+                            <span class="network-label">↑</span>
+                            <span class="network-value" id="uploadSpeed">-- KB/s</span>
+                        </div>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas id="networkSparkline" width="120" height="30"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painéis Principais -->
+            <div class="main-panels">
+                <!-- Informações do Sistema -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Informações do Sistema</h3>
+                        <span class="panel-subtitle">Detalhes do hardware</span>
+                    </div>
+                    <div class="system-info-grid">
+                        <div class="system-info-item">
+                            <div class="system-info-label">
+                                <span class="system-info-item-icon">💻</span>
+                                Sistema Operacional
+                            </div>
+                            <div class="system-info-value" id="osInfo">
+                                Desconhecido
+                            </div>
+                        </div>
+                        <div class="system-info-item">
+                            <div class="system-info-label">
+                                <span class="system-info-item-icon">🏷️</span>
+                                Versão
+                            </div>
+                            <div class="system-info-value" id="osVersion">
+                                Desconhecido
+                            </div>
+                        </div>
+                        <div class="system-info-item">
+                            <div class="system-info-label">
+                                <span class="system-info-item-icon">⏱️</span>
+                                Tempo de Atividade
+                            </div>
+                            <div class="system-info-value" id="uptime">
+                                Desconhecido
+                            </div>
+                        </div>
+                        <div class="system-info-item">
+                            <div class="system-info-label">
+                                <span class="system-info-item-icon">👤</span>
+                                Usuário
+                            </div>
+                            <div class="system-info-value" id="hostname">
+                                Desconhecido
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processos -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Processos Ativos</h3>
+                        <span class="panel-subtitle">Top 10 por CPU</span>
+                    </div>
+                    <div class="processes-container">
+                        <table class="processes-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>PID</th>
+                                    <th>CPU%</th>
+                                    <th>Memória</th>
+                                </tr>
+                            </thead>
+                            <tbody id="processesTableBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: #999;">
+                                        Carregando processos...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações Adicionais -->
+            <div class="additional-info">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Detalhes da CPU</h3>
+                        <span class="panel-subtitle">Informações do processador</span>
+                    </div>
+                    <div class="system-info-grid">
+                        <div class="system-info-item">
+                            <div class="system-info-label">
+                                <span class="system-info-item-icon">🔧</span>
+                                Modelo
+                            </div>
+                            <div class="system-info-value" id="cpuModel">
+                                Desconhecido
+                            </div>
+                        </div>
+                        <div class="system-info-item">
+                            <div class="system-info-label">
+                                <span class="system-info-item-icon">⚡</span>
+                                Velocidade
+                            </div>
+                            <div class="system-info-value" id="cpuSpeed">
+                                Desconhecido
+                            </div>
+                        </div>
+                        <div class="system-info-item">
+                            <div class="system-info-label">
+                                <span class="system-info-item-icon">🔢</span>
+                                Núcleos
+                            </div>
+                            <div class="system-info-value" id="cpuCores">
+                                Desconhecido
+                            </div>
+                        </div>
+                        <div class="system-info-item">
+                            <div class="system-info-label">
+                                <span class="system-info-item-icon">🌡️</span>
+                                Temperatura
+                            </div>
+                            <div class="system-info-value" id="cpuTemp">
+                                N/A
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

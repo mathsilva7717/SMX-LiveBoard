@@ -1,0 +1,62 @@
+{
+  "name": "smx-liveboard",
+  "version": "1.0.0",
+  "description": "Dashboard de monitoramento de sistema em tempo real",
+  "main": "electron/simple-main.js",
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"wait-on http://localhost:3002 && electron .\"",
+    "dev": "concurrently \"npm run backend:dev\" \"wait-on http://localhost:3002 && electron .\"",
+    "backend": "cd backend && npm start",
+    "backend:dev": "cd backend && npm run dev",
+    "electron": "electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win --publish=never",
+    "build:portable": "electron-builder --win --publish=never --config.win.target=portable",
+    "build:mac": "electron-builder --mac --publish=never",
+    "build:linux": "electron-builder --linux --publish=never",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "monitoring",
+    "system",
+    "dashboard",
+    "electron",
+    "nodejs"
+  ],
+  "author": "SMX",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "systeminformation": "^5.27.9",
+    "ws": "^8.14.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "wait-on": "^7.2.0",
+    "rimraf": "^5.0.5"
+  },
+  "build": {
+    "appId": "com.smx.liveboard",
+    "productName": "SMX LiveBoard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "index.html",
+      "styles/**/*",
+      "js/**/*",
+      "assets/**/*",
+      "backend/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "assets/icon.ico",
+      "artifactName": "SMXLiveBoard-${version}.exe"
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "appId": "com.smx.liveboard",
+  "productName": "SMX LiveBoard",
+  "directories": {
+    "output": "dist",
+    "buildResources": "assets"
+  },
+  "files": [
+    "electron/**/*",
+    "index.html",
+    "styles/**/*",
+    "js/**/*",
+    "assets/**/*",
+    "backend/**/*",
+    "node_modules/**/*",
+    "!node_modules/**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+    "!.editorconfig",
+    "!**/._*",
+    "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+    "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+    "!**/{appveyor.yml,.travis.yml,circle.yml}",
+    "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+  ],
+  "extraResources": [
+    {
+      "from": "backend",
+      "to": "backend",
+      "filter": ["**/*"]
+    }
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "assets/icon.ico",
+    "requestedExecutionLevel": "asInvoker"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "SMX LiveBoard"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "icon": "assets/icon.icns",
+    "category": "public.app-category.utilities"
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "assets/icon.png",
+    "category": "Utility"
+  }
+}
