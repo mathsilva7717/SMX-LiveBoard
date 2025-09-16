@@ -1,185 +1,203 @@
-# SMX LiveBoard
+# 🚀 SMX LiveBoard - Dashboard de Monitoramento
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/smx/liveboard)
+Dashboard profissional de monitoramento de sistema em tempo real, inspirado no Grafana e Zabbix.
 
-Dashboard de monitoramento de sistema em tempo real desenvolvido com Node.js, React e Electron.
+## ✨ Funcionalidades
 
-## 🌟 Open Source
+- 📊 **Métricas em Tempo Real**: CPU, RAM, Disco, Rede
+- 🔄 **Gráficos Históricos**: Tendências e análise temporal
+- 🔍 **Monitoramento de Serviços**: HTTP, TCP, UDP
+- 📈 **Processos Ativos**: Top processos por CPU/Memória
+- 🖥️ **Terminal Integrado**: Execução de comandos
+- ⚡ **WebSocket**: Dados em tempo real
+- 📱 **Responsivo**: Funciona em desktop e mobile
 
-Este projeto é **100% open source** e está disponível sob a licença MIT. Contribuições são bem-vindas!
+## 🛠️ Instalação Rápida
 
-## 🚀 Funcionalidades
+### Pré-requisitos
+- Node.js 16+ ([Download](https://nodejs.org/))
+- Windows 10/11 ou Linux/macOS
 
-- **Monitoramento em Tempo Real**: CPU, RAM, Rede, Disco e Processos
-- **Interface Moderna**: Design escuro e responsivo
-- **Gráficos Interativos**: Visualização de dados com Recharts
-- **Tabela de Processos**: Lista de processos com filtros e ordenação
-- **WebSocket**: Atualização em tempo real sem recarregar a página
-- **Aplicativo Desktop**: Empacotado com Electron
-
-## 📋 Pré-requisitos
-
-- Node.js (versão 16 ou superior)
-- npm ou yarn
-
-## 🛠️ Instalação
-
-1. Clone o repositório:
+### Instalação Automática
 ```bash
-git clone <url-do-repositorio>
+# Clone ou baixe o projeto
 cd SMX-LiveBoard
+
+# Execute o script de inicialização
+start.bat  # Windows
+# ou
+chmod +x start.sh && ./start.sh  # Linux/macOS
 ```
 
-2. Instale todas as dependências:
+### Instalação Manual
 ```bash
-npm run install:all
-```
+# 1. Instalar dependências
+npm install
 
-## 🚀 Como Executar
-
-### Desenvolvimento
-```bash
-npm run dev
-```
-
-### Produção
-```bash
+# 2. Iniciar servidor
 npm start
+
+# 3. Acessar dashboard
+# http://localhost:3000
 ```
 
-### Apenas Frontend
+## 📦 Dependências Principais
+
+| Pacote | Versão | Descrição |
+|--------|--------|-----------|
+| `systeminformation` | ^5.21.15 | Coleta de métricas do sistema |
+| `socket.io` | ^4.7.4 | WebSocket para tempo real |
+| `express` | ^4.18.2 | Servidor web |
+| `axios` | ^1.6.2 | Cliente HTTP para health checks |
+| `ps-list` | ^8.1.1 | Lista de processos |
+
+## 🔧 Configuração
+
+### Variáveis de Ambiente
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+NODE_ENV=development
+PORT=3000
+METRICS_INTERVAL=2000
+PROCESSES_INTERVAL=5000
+SERVICES_INTERVAL=30000
+```
+
+### Personalização
+- **Intervalos**: Ajuste a frequência de coleta de dados
+- **Serviços**: Adicione/remova serviços para monitorar
+- **Permissões**: Configure comandos permitidos no terminal
+
+## 📊 Dados Coletados
+
+### Métricas do Sistema
+- **CPU**: Uso, frequência, cores
+- **Memória**: Total, usado, livre, percentual
+- **Disco**: Espaço total, usado, livre, I/O
+- **Rede**: Download/upload, velocidade, interface
+
+### Processos
+- **Top 10**: Por uso de CPU
+- **Detalhes**: PID, nome, memória, usuário
+- **Histórico**: Tendências de uso
+
+### Serviços
+- **HTTP/HTTPS**: Status codes, tempo de resposta
+- **TCP**: Conectividade, latência
+- **UDP**: Disponibilidade, tempo de resposta
+
+## 🚀 Uso
+
+### Dashboard Principal
+- Acesse `http://localhost:3000`
+- Visualize métricas em tempo real
+- Navegue pelos gráficos históricos
+
+### API REST
 ```bash
-npm run frontend
+# Health check
+GET /api/health
+
+# Métricas do sistema
+GET /api/system/metrics
+
+# Processos
+GET /api/processes
+
+# Serviços
+GET /api/services
 ```
 
-### Apenas Backend
+### WebSocket
+```javascript
+const socket = io('http://localhost:3000');
+
+// Escutar métricas
+socket.on('system:metrics', (data) => {
+    console.log('Métricas:', data);
+});
+
+// Escutar processos
+socket.on('processes:update', (data) => {
+    console.log('Processos:', data);
+});
+```
+
+## 🔒 Segurança
+
+### Comandos Permitidos
+O terminal integrado permite apenas comandos seguros:
+- `dir`, `ls`, `pwd`, `cd`
+- `ping`, `tracert`, `netstat`
+- `tasklist`, `ps`, `top`
+- `systeminfo`, `uname`, `df`
+
+### Comandos Bloqueados
+- `rm`, `del`, `format`
+- `shutdown`, `reboot`
+- `sudo`, `su`
+
+## 🐛 Troubleshooting
+
+### Problemas Comuns
+
+**Erro: "Module not found"**
 ```bash
-npm run backend
+npm install
 ```
 
-## 📦 Build para Produção
-
-### Windows
+**Erro: "Permission denied"**
 ```bash
-npm run build:win
+# Windows: Execute como administrador
+# Linux: sudo npm start
 ```
 
-### macOS
+**Dashboard não carrega**
+- Verifique se a porta 3000 está livre
+- Confirme se o servidor está rodando
+- Verifique o console do navegador
+
+### Logs
 ```bash
-npm run build:mac
+# Modo desenvolvimento
+npm run dev
+
+# Logs detalhados
+DEBUG=* npm start
 ```
 
-### Linux
-```bash
-npm run build:linux
-```
+## 📈 Performance
 
-## 🏗️ Estrutura do Projeto
+### Otimizações
+- **Cache**: Dados históricos em memória
+- **Compressão**: Gzip habilitado
+- **WebSocket**: Conexão persistente
+- **Lazy Loading**: Carregamento sob demanda
 
-```
-SMX-LiveBoard/
-├── frontend/          # Aplicação React
-│   ├── src/
-│   │   ├── components/    # Componentes React
-│   │   ├── styles/        # Estilos CSS
-│   │   └── App.js         # Componente principal
-│   └── package.json
-├── backend/           # Servidor Node.js
-│   ├── services/          # Serviços de monitoramento
-│   ├── index.js           # Servidor principal
-│   └── package.json
-├── electron/          # Aplicativo Electron
-│   ├── main.js            # Processo principal
-│   └── preload.js         # Script de preload
-└── package.json       # Configuração principal
-```
+### Limites
+- **Histórico**: 60 pontos por métrica
+- **Processos**: Top 10 por padrão
+- **Serviços**: Máximo 20 simultâneos
 
-## 🔧 Tecnologias Utilizadas
+## 🤝 Contribuição
 
-### Frontend
-- **React 18**: Framework JavaScript
-- **Recharts**: Biblioteca de gráficos
-- **Lucide React**: Ícones modernos
-- **CSS3**: Estilos customizados
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/nova-funcionalidade`)
+3. Commit suas mudanças (`git commit -am 'Adiciona nova funcionalidade'`)
+4. Push para a branch (`git push origin feature/nova-funcionalidade`)
+5. Abra um Pull Request
 
-### Backend
-- **Node.js**: Runtime JavaScript
-- **Express**: Framework web
-- **SystemInformation**: Coleta de dados do sistema
-- **WebSocket**: Comunicação em tempo real
+## 📄 Licença
 
-### Desktop
-- **Electron**: Framework para aplicativos desktop
-- **Electron Builder**: Empacotamento
+MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-## 📊 Dados Monitorados
+## 🆘 Suporte
 
-- **CPU**: Uso percentual, temperatura, modelo
-- **RAM**: Uso total, disponível, percentual
-- **Rede**: Velocidade de download/upload, interface
-- **Disco**: Espaço usado/disponível, partições
-- **Processos**: Lista de processos ativos com CPU/RAM
+- **Issues**: [GitHub Issues](https://github.com/seu-usuario/SMX-LiveBoard/issues)
+- **Email**: suporte@smx.com.br
+- **Documentação**: [Wiki](https://github.com/seu-usuario/SMX-LiveBoard/wiki)
 
-## 🎨 Interface
+---
 
-- **Tema Escuro**: Design moderno e elegante
-- **Responsivo**: Adaptável a diferentes tamanhos de tela
-- **Gráficos em Tempo Real**: Visualização dinâmica dos dados
-- **Cards de Resumo**: Informações principais em destaque
-- **Tabela de Processos**: Lista completa com filtros
-
-## 🔄 Atualização de Dados
-
-- **WebSocket**: Atualização em tempo real (2 segundos)
-- **Fallback REST**: API REST como backup (5 segundos)
-- **Indicador de Status**: Mostra se está conectado
-
-## 🚀 Scripts Disponíveis
-
-- `npm start`: Executa o aplicativo completo
-- `npm run dev`: Modo desenvolvimento
-- `npm run build`: Build para produção
-- `npm run build:win`: Build para Windows
-- `npm run install:all`: Instala todas as dependências
-
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas! Para contribuir:
-
-1. **Fork** o projeto
-2. **Crie** uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** para a branch (`git push origin feature/AmazingFeature`)
-5. **Abra** um Pull Request
-
-### 🐛 Reportando Bugs
-
-Encontrou um bug? Abra uma [issue](https://github.com/smx/liveboard/issues) com:
-- Descrição detalhada do problema
-- Passos para reproduzir
-- Screenshots (se aplicável)
-- Informações do sistema (OS, versão, etc.)
-
-### 💡 Sugerindo Features
-
-Tem uma ideia? Abra uma [issue](https://github.com/smx/liveboard/issues) com:
-- Descrição da feature
-- Casos de uso
-- Mockups ou exemplos (se aplicável)
-
-## 📝 Licença
-
-Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-## 👨‍💻 Desenvolvido por
-
-**SMX Team** - [GitHub](https://github.com/smx)
-
-## 🙏 Agradecimentos
-
-- [SystemInformation](https://github.com/sebhildebrandt/systeminformation) - Coleta de dados do sistema
-- [React](https://reactjs.org/) - Framework frontend
-- [Electron](https://electronjs.org/) - Framework desktop
-- [Recharts](https://recharts.org/) - Biblioteca de gráficos
-- [Lucide React](https://lucide.dev/) - Ícones
+**SMX LiveBoard** - Monitoramento profissional feito simples! 🎉

@@ -64,7 +64,6 @@ async function collectSystemData() {
         brand: cpuInfo.brand,
         speed: cpuInfo.speed,
         cores: cpuInfo.cores,
-        temperature: cpuInfo.temperature?.main || null
       },
       mem: {
         total: memory.total,

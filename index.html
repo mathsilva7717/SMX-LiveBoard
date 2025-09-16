@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SMX LiveBoard - Dashboard de monitoramento de sistema em tempo real">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>SMX LiveBoard - Dashboard de Monitoramento</title>
-    <link rel="stylesheet" href="styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/main.css?v=20250115-3">
     <link rel="icon" href="assets/icon.ico">
 </head>
 <body>
@@ -13,25 +19,71 @@
     <header class="header">
         <div class="header-left">
             <div class="logo">
-                <div class="logo-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <path d="M9 9h6v6H9z"/>
-                        <path d="M9 1v6"/>
-                        <path d="M15 1v6"/>
-                        <path d="M9 17v6"/>
-                        <path d="M15 17v6"/>
-                        <path d="M1 9h6"/>
-                        <path d="M17 9h6"/>
-                        <path d="M1 15h6"/>
-                        <path d="M17 15h6"/>
-                    </svg>
+                <div class="logo-main">
+                    <div class="logo-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <path d="M9 9h6v6H9z"/>
+                            <path d="M9 1v6"/>
+                            <path d="M15 1v6"/>
+                            <path d="M9 17v6"/>
+                            <path d="M15 17v6"/>
+                            <path d="M1 9h6"/>
+                            <path d="M17 9h6"/>
+                            <path d="M1 15h6"/>
+                            <path d="M17 15h6"/>
+                        </svg>
+                    </div>
+                    <span class="logo-title">SMX LiveBoard</span>
                 </div>
-                <span>SMX LiveBoard</span>
+                <div class="logo-subtitle">CONTROL CENTER</div>
+            </div>
+            
+            <!-- Saudação Dinâmica -->
+            <div class="greeting-container">
+                <div class="greeting-icon" id="greetingIcon">
+                    <!-- Ícone será inserido dinamicamente via JavaScript -->
+                </div>
+                <div class="greeting-text">
+                    <span class="greeting-message" id="greetingMessage">Bom dia!</span>
+                </div>
             </div>
         </div>
         <div class="header-right">
             <div class="header-controls">
+                <button class="control-btn telegram-btn" id="telegramBtn" title="Enviar para Telegram">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 8.16l-1.61 7.59c-.12.54-.44.67-.89.42l-2.46-1.81-1.19 1.15c-.13.13-.24.24-.49.24l.18-2.55 4.57-4.13c.2-.18-.04-.28-.31-.1l-5.64 3.55-2.43-.76c-.53-.16-.54-.53.11-.79l9.57-3.69c.44-.16.83.1.69.79z"/>
+                    </svg>
+                    <span>Alert</span>
+                </button>
+                <button class="control-btn ssh-btn" id="sshBtn" title="Conexão SSH">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                        <path d="M7 8h10"/>
+                        <path d="M7 12h6"/>
+                    </svg>
+                    <span>SSH</span>
+                </button>
+                <button class="control-btn logs-btn" id="logsBtn" title="Visualizar Logs">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10,9 9,9 8,9"/>
+                    </svg>
+                    <span>Logs</span>
+                </button>
+                <button class="control-btn terminal-btn" id="terminalBtn" title="Terminal Integrado">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 17 10 11 4 5"/>
+                        <line x1="12" y1="19" x2="20" y2="19"/>
+                    </svg>
+                    <span>Terminal</span>
+                </button>
                 <button class="control-btn" id="refreshBtn" title="Atualizar">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="23 4 23 10 17 10"/>
@@ -49,8 +101,9 @@
                 <div class="status-dot" id="statusDot"></div>
                 <span id="statusText">Desconectado</span>
             </div>
-            <div class="current-time" id="currentTime">
-                --:--:--
+            <div class="current-time" id="currentTimeContainer">
+                <span id="currentDate">--/--/----</span>
+                <span id="currentTime">--:--:--</span>
             </div>
         </div>
     </header>
@@ -67,69 +120,131 @@
 
         <!-- Dashboard Content -->
         <div class="dashboard" id="dashboardContent" style="display: none;">
-            <!-- Cards de Resumo -->
-            <div class="summary-cards">
-                <div class="summary-card cpu-card">
-                    <div class="summary-card-header">
-                        <span class="summary-card-title">CPU</span>
-                        <div class="summary-card-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="4" y="4" width="16" height="16" rx="2"/>
-                                <rect x="9" y="9" width="6" height="6"/>
-                                <line x1="9" y1="1" x2="9" y2="4"/>
-                                <line x1="15" y1="1" x2="15" y2="4"/>
-                                <line x1="9" y1="20" x2="9" y2="23"/>
-                                <line x1="15" y1="20" x2="15" y2="23"/>
-                                <line x1="20" y1="9" x2="23" y2="9"/>
-                                <line x1="20" y1="14" x2="23" y2="14"/>
-                                <line x1="1" y1="9" x2="4" y2="9"/>
-                                <line x1="1" y1="14" x2="4" y2="14"/>
+            <!-- Indicadores Circulares -->
+            <div class="circular-gauges">
+                <div class="gauge-container cpu-gauge sphere-style">
+                    <div class="gauge-header">
+                        <span class="gauge-title">CPU</span>
+                        <div class="gauge-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                                <circle cx="12" cy="12" r="2"/>
                             </svg>
                         </div>
                     </div>
-                    <div class="summary-card-value" id="cpuUsage">
-                        0%
+                    
+                    <!-- Sphere Style CPU Gauge -->
+                    <div class="sphere-container">
+                        <div class="sphere-gauge">
+                            <svg class="sphere-svg" viewBox="0 0 120 120">
+                                <!-- Outer Circle -->
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#2a2a2a" stroke-width="6"/>
+                                
+                                <!-- Progress Arc -->
+                                <circle class="sphere-progress" id="cpuGauge" cx="60" cy="60" r="50" fill="none" stroke="#00d4ff" stroke-width="6" 
+                                        stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" transform="rotate(-90 60 60)"/>
+                                
+                                <!-- Center Circle -->
+                                <circle cx="60" cy="60" r="8" fill="#1a1a1a" stroke="#333" stroke-width="2"/>
+                                
+                                <!-- Needle -->
+                                <g class="needle" id="cpuNeedle">
+                                    <line x1="60" y1="60" x2="60" y2="20" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+                                    <circle cx="60" cy="60" r="3" fill="#ffffff"/>
+                                </g>
+                                
+                                <!-- Hour Marks -->
+                                <g class="hour-marks">
+                                    <line x1="60" y1="10" x2="60" y2="15" stroke="#666" stroke-width="2"/>
+                                    <line x1="105" y1="60" x2="100" y2="60" stroke="#666" stroke-width="2"/>
+                                    <line x1="60" y1="110" x2="60" y2="105" stroke="#666" stroke-width="2"/>
+                                    <line x1="15" y1="60" x2="20" y2="60" stroke="#666" stroke-width="2"/>
+                                </g>
+                            </svg>
+                            
+                        </div>
                     </div>
-                    <div class="summary-card-label">Uso atual</div>
-                    <div class="summary-card-progress">
-                        <div class="summary-card-progress-bar" id="cpuProgressBar"></div>
-                    </div>
-                    <div class="sparkline-container">
-                        <canvas id="cpuSparkline" width="120" height="30"></canvas>
+                    
+                    <div class="gauge-details">
+                        <div class="cpu-percentage" id="cpuGaugeValue">0%</div>
+                        <div class="gauge-label">Uso atual</div>
+                        <div class="gauge-trend">
+                            <canvas id="cpuTrend" width="80" height="20"></canvas>
+                        </div>
                     </div>
                 </div>
 
-                <div class="summary-card ram-card">
-                    <div class="summary-card-header">
-                        <span class="summary-card-title">Memória</span>
-                        <div class="summary-card-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="gauge-container ram-gauge modern-memory">
+                    <div class="gauge-header">
+                        <span class="gauge-title">MEMÓRIA</span>
+                        <div class="gauge-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                <line x1="9" y1="9" x2="15" y2="15"/>
-                                <line x1="15" y1="9" x2="9" y2="15"/>
-                                <circle cx="12" cy="12" r="3"/>
+                                <rect x="7" y="7" width="10" height="10" rx="1" ry="1"/>
+                                <line x1="7" y1="3" x2="7" y2="7"/>
+                                <line x1="17" y1="3" x2="17" y2="7"/>
+                                <line x1="7" y1="17" x2="7" y2="21"/>
+                                <line x1="17" y1="17" x2="17" y2="21"/>
                             </svg>
                         </div>
                     </div>
-                    <div class="summary-card-value" id="ramUsage">
-                        0 B
+                    
+                    <!-- Modern Memory Visualization -->
+                    <div class="modern-memory-container">
+                        <!-- Memory Bars -->
+                        <div class="memory-bars">
+                            <div class="memory-bar">
+                                <div class="bar-fill" style="height: 75%;"></div>
+                                <div class="bar-label">8GB</div>
+                            </div>
+                            <div class="memory-bar">
+                                <div class="bar-fill" style="height: 60%;"></div>
+                                <div class="bar-label">8GB</div>
+                            </div>
+                            <div class="memory-bar">
+                                <div class="bar-fill" style="height: 45%;"></div>
+                                <div class="bar-label">8GB</div>
+                            </div>
+                            <div class="memory-bar">
+                                <div class="bar-fill" style="height: 30%;"></div>
+                                <div class="bar-label">8GB</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Central Info -->
+                        <div class="memory-info">
+                            <div class="memory-percentage" id="ramGaugeValue">0%</div>
+                            <div class="memory-status">RAM USAGE</div>
+                        </div>
+                        
+                        <!-- Activity Wave -->
+                        <div class="activity-wave">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
                     </div>
-                    <div class="summary-card-label" id="ramTotal">
-                        de 0 B
-                    </div>
-                    <div class="summary-card-progress">
-                        <div class="summary-card-progress-bar" id="ramProgressBar"></div>
-                    </div>
-                    <div class="sparkline-container">
-                        <canvas id="ramSparkline" width="120" height="30"></canvas>
+                    
+                    <div class="gauge-details">
+                        <div class="gauge-label" id="ramUsage">-- B</div>
+                        <div class="gauge-sublabel" id="ramTotal">de -- B</div>
+                        <div class="gauge-trend">
+                            <canvas id="ramTrend" width="80" height="20"></canvas>
+                        </div>
                     </div>
                 </div>
 
-                <div class="summary-card disk-card">
-                    <div class="summary-card-header">
-                        <span class="summary-card-title">Disco</span>
-                        <div class="summary-card-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="gauge-container disk-gauge">
+                    <div class="gauge-header">
+                        <span class="gauge-title">DISCO</span>
+                        <div class="gauge-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
                                 <line x1="8" y1="21" x2="16" y2="21"/>
                                 <line x1="12" y1="17" x2="12" y2="21"/>
@@ -137,96 +252,382 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="summary-card-value" id="diskUsage">
-                        0 B
+                    <div class="circular-gauge">
+                        <svg class="gauge-svg" viewBox="0 0 120 120">
+                            <circle class="gauge-bg" cx="60" cy="60" r="50" fill="none" stroke="#1a1a1a" stroke-width="8"/>
+                            <circle class="gauge-fill" id="diskGauge" cx="60" cy="60" r="50" fill="none" stroke="#ffaa00" stroke-width="8" 
+                                    stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" transform="rotate(-90 60 60)"/>
+                            <text class="gauge-value" x="60" y="65" text-anchor="middle" id="diskGaugeValue">0%</text>
+                        </svg>
                     </div>
-                    <div class="summary-card-label" id="diskTotal">
-                        de 0 B
+                    <div class="disk-indicators">
+                        <div class="disk-usage-bar">
+                            <div class="disk-usage-fill" id="diskUsageBar"></div>
+                        </div>
+                        <div class="disk-space-grid">
+                            <div class="disk-space-item">
+                                <span class="disk-space-label">Usado</span>
+                                <span class="disk-space-value" id="diskUsedGrid">-- GB</span>
+                            </div>
+                            <div class="disk-space-item">
+                                <span class="disk-space-label">Livre</span>
+                                <span class="disk-space-value" id="diskFreeGrid">-- GB</span>
+                            </div>
+                            <div class="disk-space-item">
+                                <span class="disk-space-label">Total</span>
+                                <span class="disk-space-value" id="diskTotalGrid">-- GB</span>
+                            </div>
+                        </div>
+                        <div class="disk-activity-indicators">
+                            <div class="disk-activity-dot"></div>
+                            <div class="disk-activity-dot"></div>
+                            <div class="disk-activity-dot"></div>
+                            <div class="disk-activity-dot"></div>
+                        </div>
                     </div>
-                    <div class="summary-card-progress">
-                        <div class="summary-card-progress-bar" id="diskProgressBar"></div>
-                    </div>
-                    <div class="sparkline-container">
-                        <canvas id="diskSparkline" width="120" height="30"></canvas>
+                    <div class="gauge-details">
+                        <div class="gauge-label" id="diskUsage">-- B</div>
+                        <div class="gauge-sublabel" id="diskTotal">de -- B</div>
+                        <div class="gauge-trend">
+                            <canvas id="diskTrend" width="80" height="20"></canvas>
+                        </div>
                     </div>
                 </div>
 
-                <div class="summary-card network-card">
-                    <div class="summary-card-header">
-                        <span class="summary-card-title">Rede</span>
-                        <div class="summary-card-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="gauge-container network-gauge">
+                    <div class="gauge-header">
+                        <span class="gauge-title">REDE</span>
+                        <div class="gauge-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"/>
                                 <line x1="2" y1="12" x2="22" y2="12"/>
                                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                             </svg>
                         </div>
                     </div>
-                    <div class="summary-card-value" id="networkStatus">
-                        Conectado
+                    <div class="circular-gauge">
+                        <svg class="gauge-svg" viewBox="0 0 120 120">
+                            <circle class="gauge-bg" cx="60" cy="60" r="50" fill="none" stroke="#1a1a1a" stroke-width="8"/>
+                            <circle class="gauge-fill" id="networkGauge" cx="60" cy="60" r="50" fill="none" stroke="#ff6b6b" stroke-width="8" 
+                                    stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" transform="rotate(-90 60 60)"/>
+                            <text class="gauge-value" x="60" y="65" text-anchor="middle" id="networkGaugeValue">UP</text>
+                        </svg>
                     </div>
-                    <div class="summary-card-label" id="networkSpeed">
-                        -- Mbps
-                    </div>
-                    <div class="network-details">
-                        <div class="network-item">
-                            <span class="network-label">↓</span>
-                            <span class="network-value" id="downloadSpeed">-- KB/s</span>
+                    <div class="network-indicators">
+                        <div class="network-status-indicator">
+                            <div class="network-status-dot"></div>
+                            <span id="networkStatus">ONLINE</span>
                         </div>
-                        <div class="network-item">
-                            <span class="network-label">↑</span>
-                            <span class="network-value" id="uploadSpeed">-- KB/s</span>
+                        <div class="network-speed-bars">
+                            <div class="speed-bar">
+                                <span class="speed-bar-label">↓ DOWN</span>
+                                <div class="speed-bar-container">
+                                    <div class="speed-bar-fill download"></div>
+                                </div>
+                                <span class="speed-value download" id="downloadSpeed">1.2 MB/s</span>
+                            </div>
+                            <div class="speed-bar">
+                                <span class="speed-bar-label">↑ UP</span>
+                                <div class="speed-bar-container">
+                                    <div class="speed-bar-fill upload"></div>
+                                </div>
+                                <span class="speed-value upload" id="uploadSpeed">0.8 MB/s</span>
+                            </div>
+                        </div>
+                        <!-- Internet Signal Waves -->
+                        <div class="internet-signal">
+                            <div class="signal-wave wave-1"></div>
+                            <div class="signal-wave wave-2"></div>
+                            <div class="signal-wave wave-3"></div>
+                            <div class="signal-wave wave-4"></div>
                         </div>
                     </div>
-                    <div class="sparkline-container">
-                        <canvas id="networkSparkline" width="120" height="30"></canvas>
+                    <div class="gauge-details">
+                        <div class="gauge-label" id="networkStatus">Conectado</div>
+                        <div class="network-stats">
+                            <div class="network-stat">
+                                <span class="network-label">↓</span>
+                                <span class="network-value" id="downloadSpeedDetail">-- KB/s</span>
+                            </div>
+                            <div class="network-stat">
+                                <span class="network-label">↑</span>
+                                <span class="network-value" id="uploadSpeedDetail">-- KB/s</span>
+                            </div>
+                        </div>
+                        <div class="gauge-trend">
+                            <canvas id="networkTrend" width="80" height="20"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Painéis Principais -->
             <div class="main-panels">
-                <!-- Informações do Sistema -->
+                <!-- Métricas Dinâmicas do Sistema -->
                 <div class="panel">
                     <div class="panel-header">
-                        <h3 class="panel-title">Informações do Sistema</h3>
-                        <span class="panel-subtitle">Detalhes do hardware</span>
+                        <h3 class="panel-title">Métricas do Sistema</h3>
+                        <span class="panel-subtitle">Monitoramento em tempo real</span>
                     </div>
-                    <div class="system-info-grid">
-                        <div class="system-info-item">
-                            <div class="system-info-label">
-                                <span class="system-info-item-icon">💻</span>
-                                Sistema Operacional
+                    <div class="enhanced-metrics-grid">
+                        <!-- Load Average Card -->
+                        <div class="enhanced-metric-card load-card">
+                            <div class="metric-header">
+                                <div class="metric-icon load-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                                        <path d="M21 3v5h-5"/>
+                                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                                        <path d="M3 21v-5h5"/>
+                                        <circle cx="12" cy="12" r="1"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-title">LOAD AVERAGE</span>
                             </div>
-                            <div class="system-info-value" id="osInfo">
-                                Desconhecido
+                            <div class="metric-visual">
+                                <div class="load-gauge">
+                                    <div class="load-circle">
+                                        <div class="load-fill" style="--progress: 0%;"></div>
+                                        <div class="load-indicators">
+                                            <div class="load-dot load-dot-1"></div>
+                                            <div class="load-dot load-dot-2"></div>
+                                            <div class="load-dot load-dot-3"></div>
+                                        </div>
+                                        <div class="load-center-icon">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                                                <path d="M21 3v5h-5"/>
+                                                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                                                <path d="M3 21v-5h5"/>
+                                                <circle cx="12" cy="12" r="1"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric-info">
+                                <div class="metric-value" id="loadValue">0.00</div>
+                                <div class="metric-status" id="loadStatus">IDLE</div>
+                            </div>
+                            <div class="metric-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">1min:</span>
+                                    <span class="detail-value" id="load1min">0.00</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">5min:</span>
+                                    <span class="detail-value" id="load5min">0.00</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">15min:</span>
+                                    <span class="detail-value" id="load15min">0.00</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="system-info-item">
-                            <div class="system-info-label">
-                                <span class="system-info-item-icon">🏷️</span>
-                                Versão
+
+                        <!-- Frequency Card -->
+                        <div class="enhanced-metric-card freq-card">
+                            <div class="metric-header">
+                                <div class="metric-icon freq-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                                        <rect x="9" y="9" width="6" height="6"/>
+                                        <path d="M9 1v3"/>
+                                        <path d="M15 1v3"/>
+                                        <path d="M9 20v3"/>
+                                        <path d="M15 20v3"/>
+                                        <path d="M20 9h3"/>
+                                        <path d="M20 14h3"/>
+                                        <path d="M1 9h3"/>
+                                        <path d="M1 14h3"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-title">FREQUÊNCIA</span>
                             </div>
-                            <div class="system-info-value" id="osVersion">
-                                Desconhecido
+                            <div class="metric-visual">
+                                <div class="freq-display">
+                                    <div class="freq-bars">
+                                        <div class="freq-bar active"></div>
+                                        <div class="freq-bar active"></div>
+                                        <div class="freq-bar active"></div>
+                                        <div class="freq-bar active"></div>
+                                        <div class="freq-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric-info">
+                                <div class="metric-value" id="freqValue">3.8GHz</div>
+                                <div class="metric-status" id="freqStatus">TURBO</div>
+                            </div>
+                            <div class="metric-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Base:</span>
+                                    <span class="detail-value">2.4GHz</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Boost:</span>
+                                    <span class="detail-value">4.2GHz</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="system-info-item">
-                            <div class="system-info-label">
-                                <span class="system-info-item-icon">⏱️</span>
-                                Tempo de Atividade
+
+                        <!-- Latency Card -->
+                        <div class="enhanced-metric-card latency-card">
+                            <div class="metric-header">
+                                <div class="metric-icon latency-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M2 12h20"/>
+                                        <path d="M12 2v20"/>
+                                        <circle cx="12" cy="12" r="2"/>
+                                        <path d="M12 2a10 10 0 0 1 10 10"/>
+                                        <path d="M12 22a10 10 0 0 1-10-10"/>
+                                        <path d="M2 12a10 10 0 0 1 10-10"/>
+                                        <path d="M22 12a10 10 0 0 1-10 10"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-title">LATÊNCIA</span>
                             </div>
-                            <div class="system-info-value" id="uptime">
-                                Desconhecido
+                            <div class="metric-visual">
+                                <div class="latency-gauge">
+                                    <div class="latency-circle">
+                                        <div class="latency-fill" style="--progress: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric-info">
+                                <div class="metric-value" id="latencyValue">--ms</div>
+                                <div class="metric-status" id="latencyStatus">MEDINDO</div>
+                            </div>
+                            <div class="metric-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Ping:</span>
+                                    <span class="detail-value">--ms</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Jitter:</span>
+                                    <span class="detail-value">--ms</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="system-info-item">
-                            <div class="system-info-label">
-                                <span class="system-info-item-icon">👤</span>
-                                Usuário
+
+                        <!-- Uptime Card -->
+                        <div class="enhanced-metric-card uptime-card">
+                            <div class="metric-header">
+                                <div class="metric-icon uptime-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12,6 12,12 16,14"/>
+                                        <path d="M12 2a10 10 0 0 1 10 10"/>
+                                        <path d="M12 22a10 10 0 0 1-10-10"/>
+                                    </svg>
+                                </div>
+                                <span class="metric-title">UPTIME</span>
                             </div>
-                            <div class="system-info-value" id="hostname">
-                                Desconhecido
+                            <div class="metric-visual">
+                                <div class="uptime-progress">
+                                    <div class="uptime-bar">
+                                        <div class="uptime-fill" style="width: 75%;"></div>
+                                    </div>
+                                    <div class="uptime-dots">
+                                        <div class="uptime-dot active"></div>
+                                        <div class="uptime-dot active"></div>
+                                        <div class="uptime-dot active"></div>
+                                        <div class="uptime-dot"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric-info">
+                                <div class="metric-value" id="uptimeValue">1d 0h</div>
+                                <div class="metric-status" id="uptimeStatus">ESTÁVEL</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informações do Sistema -->
+                    <div class="system-info-section">
+                        <div class="system-info-header">
+                            <h4 class="system-info-title">Informações do Sistema</h4>
+                            <span class="system-info-subtitle">Detalhes da plataforma</span>
+                        </div>
+                        <div class="system-info-grid">
+                            <div class="system-info-card">
+                                <div class="system-info-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                        <line x1="8" y1="21" x2="16" y2="21"/>
+                                        <line x1="12" y1="17" x2="12" y2="21"/>
+                                    </svg>
+                                </div>
+                                <div class="system-info-content">
+                                    <div class="system-info-label">Sistema Operacional</div>
+                                    <div class="system-info-value" id="osInfo">Windows 11</div>
+                                </div>
+                            </div>
+                            
+                            <div class="system-info-card">
+                                <div class="system-info-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                                        <rect x="9" y="9" width="6" height="6"/>
+                                    </svg>
+                                </div>
+                                <div class="system-info-content">
+                                    <div class="system-info-label">Arquitetura</div>
+                                    <div class="system-info-value" id="archInfo">x64</div>
+                                </div>
+                            </div>
+                            
+                            <div class="system-info-card">
+                                <div class="system-info-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12,6 12,12 16,14"/>
+                                    </svg>
+                                </div>
+                                <div class="system-info-content">
+                                    <div class="system-info-label">Versão Node.js</div>
+                                    <div class="system-info-value" id="nodeVersion">v18.17.0</div>
+                                </div>
+                            </div>
+                            
+                            <div class="system-info-card">
+                                <div class="system-info-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"/>
+                                        <path d="M12 6v6l4 2"/>
+                                    </svg>
+                                </div>
+                                <div class="system-info-content">
+                                    <div class="system-info-label">Uptime Sistema</div>
+                                    <div class="system-info-value" id="systemUptime">2d 14h 32m</div>
+                                </div>
+                            </div>
+                            
+                            <div class="system-info-card">
+                                <div class="system-info-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                </div>
+                                <div class="system-info-content">
+                                    <div class="system-info-label">Usuário</div>
+                                    <div class="system-info-value" id="currentUser">usuario</div>
+                                </div>
+                            </div>
+                            
+                            <div class="system-info-card">
+                                <div class="system-info-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                        <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+                                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                                    </svg>
+                                </div>
+                                <div class="system-info-content">
+                                    <div class="system-info-label">Diretório</div>
+                                    <div class="system-info-value" id="currentDir">C:\SMX\SMX-LiveBoard</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -236,22 +637,143 @@
                 <div class="panel">
                     <div class="panel-header">
                         <h3 class="panel-title">Processos Ativos</h3>
-                        <span class="panel-subtitle">Top 10 por CPU</span>
+                        <span class="panel-subtitle">Top 5 por CPU</span>
+                    </div>
+                    <div class="processes-controls">
+                        <div class="process-totals">
+                            <span class="total-cpu">CPU Total: <span id="totalCpu">0%</span></span>
+                            <span class="total-memory">Memória Total: <span id="totalMemory">0 MB</span></span>
+                        </div>
                     </div>
                     <div class="processes-container">
                         <table class="processes-table">
                             <thead>
                                 <tr>
-                                    <th>Nome</th>
+                                    <th>NOME</th>
                                     <th>PID</th>
                                     <th>CPU%</th>
-                                    <th>Memória</th>
+                                    <th>MEMÓRIA</th>
                                 </tr>
                             </thead>
                             <tbody id="processesTableBody">
-                                <tr>
-                                    <td colspan="4" style="text-align: center; color: #999;">
-                                        Carregando processos...
+                                <tr class="process-row" data-name="chrome.exe" data-pid="1234" data-cpu="15.2" data-memory="512">
+                                    <td class="process-name">chrome.exe</td>
+                                    <td class="process-pid">1234</td>
+                                    <td class="process-cpu">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">15.2%</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill cpu-bar" style="width: 15.2%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="process-memory">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">512 MB</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill memory-bar" style="width: 51.2%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="process-row" data-name="code.exe" data-pid="5678" data-cpu="8.5" data-memory="256">
+                                    <td class="process-name">code.exe</td>
+                                    <td class="process-pid">5678</td>
+                                    <td class="process-cpu">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">8.5%</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill cpu-bar" style="width: 8.5%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="process-memory">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">256 MB</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill memory-bar" style="width: 25.6%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="process-row" data-name="node.exe" data-pid="9012" data-cpu="5.1" data-memory="128">
+                                    <td class="process-name">node.exe</td>
+                                    <td class="process-pid">9012</td>
+                                    <td class="process-cpu">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">5.1%</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill cpu-bar" style="width: 5.1%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="process-memory">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">128 MB</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill memory-bar" style="width: 12.8%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="process-row" data-name="explorer.exe" data-pid="3456" data-cpu="2.3" data-memory="64">
+                                    <td class="process-name">explorer.exe</td>
+                                    <td class="process-pid">3456</td>
+                                    <td class="process-cpu">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">2.3%</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill cpu-bar" style="width: 2.3%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="process-memory">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">64 MB</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill memory-bar" style="width: 6.4%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="process-row" data-name="firefox.exe" data-pid="7890" data-cpu="12.8" data-memory="384">
+                                    <td class="process-name">firefox.exe</td>
+                                    <td class="process-pid">7890</td>
+                                    <td class="process-cpu">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">12.8%</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill cpu-bar" style="width: 12.8%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="process-memory">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">384 MB</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill memory-bar" style="width: 38.4%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="process-row" data-name="discord.exe" data-pid="4321" data-cpu="7.5" data-memory="300">
+                                    <td class="process-name">discord.exe</td>
+                                    <td class="process-pid">4321</td>
+                                    <td class="process-cpu">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">7.5%</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill cpu-bar" style="width: 7.5%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="process-memory">
+                                        <div class="metric-with-bar">
+                                            <span class="metric-value">300 MB</span>
+                                            <div class="metric-bar">
+                                                <div class="metric-bar-fill memory-bar" style="width: 30%"></div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -260,56 +782,395 @@
                 </div>
             </div>
 
-            <!-- Informações Adicionais -->
-            <div class="additional-info">
-                <div class="panel">
+            <!-- Gráficos Históricos e Monitoramento de Serviços -->
+            <div class="monitoring-section">
+                <!-- Gráficos Históricos -->
+                <div class="panel historical-panel">
                     <div class="panel-header">
-                        <h3 class="panel-title">Detalhes da CPU</h3>
-                        <span class="panel-subtitle">Informações do processador</span>
+                        <h3 class="panel-title">Gráficos Históricos</h3>
+                        <span class="panel-subtitle">Tendências e análise temporal</span>
+                        <div class="chart-controls">
+                            <button class="time-btn active" data-period="1h">1H</button>
+                            <button class="time-btn" data-period="6h">6H</button>
+                            <button class="time-btn" data-period="24h">24H</button>
+                            <button class="time-btn" data-period="7d">7D</button>
+                        </div>
                     </div>
-                    <div class="system-info-grid">
-                        <div class="system-info-item">
-                            <div class="system-info-label">
-                                <span class="system-info-item-icon">🔧</span>
-                                Modelo
+                    
+                    <div class="charts-grid">
+                        <!-- CPU Histórico -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h4>CPU Usage</h4>
+                                <div class="chart-legend">
+                                    <span class="legend-item">
+                                        <div class="legend-color cpu-color"></div>
+                                        CPU
+                                    </span>
+                                </div>
                             </div>
-                            <div class="system-info-value" id="cpuModel">
-                                Desconhecido
+                            <div class="chart-wrapper">
+                                <canvas id="cpuHistoricalChart"></canvas>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Média:</span>
+                                    <span class="stat-value" id="cpuAvg">0%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Pico:</span>
+                                    <span class="stat-value" id="cpuPeak">0%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Tendência:</span>
+                                    <span class="stat-value trend" id="cpuTrend">→</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="system-info-item">
-                            <div class="system-info-label">
-                                <span class="system-info-item-icon">⚡</span>
-                                Velocidade
+
+                        <!-- Memória Histórico -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h4>Memory Usage</h4>
+                                <div class="chart-legend">
+                                    <span class="legend-item">
+                                        <div class="legend-color memory-color"></div>
+                                        RAM
+                                    </span>
+                                </div>
                             </div>
-                            <div class="system-info-value" id="cpuSpeed">
-                                Desconhecido
+                            <div class="chart-wrapper">
+                                <canvas id="memoryHistoricalChart"></canvas>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Média:</span>
+                                    <span class="stat-value" id="memoryAvg">0 GB</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Pico:</span>
+                                    <span class="stat-value" id="memoryPeak">0 GB</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Tendência:</span>
+                                    <span class="stat-value trend" id="memoryTrend">→</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="system-info-item">
-                            <div class="system-info-label">
-                                <span class="system-info-item-icon">🔢</span>
-                                Núcleos
+
+                        <!-- Rede Histórico -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h4>Network Activity</h4>
+                                <div class="chart-legend">
+                                    <span class="legend-item">
+                                        <div class="legend-color download-color"></div>
+                                        Download
+                                    </span>
+                                    <span class="legend-item">
+                                        <div class="legend-color upload-color"></div>
+                                        Upload
+                                    </span>
+                                </div>
                             </div>
-                            <div class="system-info-value" id="cpuCores">
-                                Desconhecido
+                            <div class="chart-wrapper">
+                                <canvas id="networkHistoricalChart"></canvas>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Total ↓:</span>
+                                    <span class="stat-value" id="totalDownload">0 MB</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Total ↑:</span>
+                                    <span class="stat-value" id="totalUpload">0 MB</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Velocidade:</span>
+                                    <span class="stat-value" id="avgSpeed">0 MB/s</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="system-info-item">
-                            <div class="system-info-label">
-                                <span class="system-info-item-icon">🌡️</span>
-                                Temperatura
+
+                        <!-- Disco Histórico -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h4>Disk Usage</h4>
+                                <div class="chart-legend">
+                                    <span class="legend-item">
+                                        <div class="legend-color disk-color"></div>
+                                        Disco
+                                    </span>
+                                </div>
                             </div>
-                            <div class="system-info-value" id="cpuTemp">
-                                N/A
+                            <div class="chart-wrapper">
+                                <canvas id="diskHistoricalChart"></canvas>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Usado:</span>
+                                    <span class="stat-value" id="diskUsed">-- GB</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Livre:</span>
+                                    <span class="stat-value" id="diskFree">-- GB</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Crescimento:</span>
+                                    <span class="stat-value" id="diskGrowth">0 GB/dia</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitoramento de Serviços -->
+                <div class="panel services-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Monitoramento de Serviços</h3>
+                        <span class="panel-subtitle">Health checks e disponibilidade</span>
+                        <div class="services-controls">
+                            <button class="control-btn add-service-btn" id="addServiceBtn" title="Adicionar Serviço">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                <span>Adicionar</span>
+                            </button>
+                            <button class="control-btn refresh-services-btn" id="refreshServicesBtn" title="Atualizar Serviços">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"/>
+                                    <polyline points="1 20 1 14 7 14"/>
+                                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="services-grid">
+                        <!-- Serviço HTTP -->
+                        <div class="service-card" data-service="http">
+                            <div class="service-header">
+                                <div class="service-status online" id="httpStatus">
+                                    <div class="status-dot"></div>
+                                    <span class="status-text">ONLINE</span>
+                                </div>
+                                <div class="service-type">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                    </svg>
+                                    HTTP
+                                </div>
+                            </div>
+                            <div class="service-info">
+                                <h4 class="service-name">API Principal</h4>
+                                <p class="service-url">https://api.exemplo.com/health</p>
+                                <div class="service-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Response Time:</span>
+                                        <span class="metric-value" id="httpResponseTime">45ms</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Uptime:</span>
+                                        <span class="metric-value" id="httpUptime">99.9%</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Last Check:</span>
+                                        <span class="metric-value" id="httpLastCheck">2s ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="service-chart">
+                                <canvas id="httpResponseChart" width="200" height="60"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Serviço TCP -->
+                        <div class="service-card" data-service="tcp">
+                            <div class="service-header">
+                                <div class="service-status online" id="tcpStatus">
+                                    <div class="status-dot"></div>
+                                    <span class="status-text">ONLINE</span>
+                                </div>
+                                <div class="service-type">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                        <line x1="8" y1="21" x2="16" y2="21"/>
+                                        <line x1="12" y1="17" x2="12" y2="21"/>
+                                    </svg>
+                                    TCP
+                                </div>
+                            </div>
+                            <div class="service-info">
+                                <h4 class="service-name">PostgreSQL</h4>
+                                <p class="service-url">localhost:5432</p>
+                                <div class="service-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Connection Time:</span>
+                                        <span class="metric-value" id="tcpConnectionTime">12ms</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Uptime:</span>
+                                        <span class="metric-value" id="tcpUptime">100%</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Last Check:</span>
+                                        <span class="metric-value" id="tcpLastCheck">5s ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="service-chart">
+                                <canvas id="tcpConnectionChart" width="200" height="60"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Serviço UDP -->
+                        <div class="service-card" data-service="udp">
+                            <div class="service-header">
+                                <div class="service-status warning" id="udpStatus">
+                                    <div class="status-dot"></div>
+                                    <span class="status-text">INSTÁVEL</span>
+                                </div>
+                                <div class="service-type">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 6v6l4 2"/>
+                                    </svg>
+                                    UDP
+                                </div>
+                            </div>
+                            <div class="service-info">
+                                <h4 class="service-name">DNS Server</h4>
+                                <p class="service-url">8.8.8.8:53</p>
+                                <div class="service-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Response Time:</span>
+                                        <span class="metric-value" id="udpResponseTime">28ms</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Uptime:</span>
+                                        <span class="metric-value" id="udpUptime">95.2%</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Last Check:</span>
+                                        <span class="metric-value" id="udpLastCheck">1s ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="service-chart">
+                                <canvas id="udpResponseChart" width="200" height="60"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Card de Informações -->
+                        <div class="service-card info-card">
+                            <div class="service-header">
+                                <div class="service-status info">
+                                    <div class="status-dot"></div>
+                                    <span class="status-text">INFO</span>
+                                </div>
+                                <div class="service-type">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 16v-4"/>
+                                        <path d="M12 8h.01"/>
+                                    </svg>
+                                    SISTEMA
+                                </div>
+                            </div>
+                            <div class="service-info">
+                                <h4 class="service-name">Monitoramento Ativo</h4>
+                                <p class="service-url">SMX LiveBoard v1.0</p>
+                                <div class="service-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Serviços:</span>
+                                        <span class="metric-value" id="totalServices">3</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Uptime:</span>
+                                        <span class="metric-value" id="systemUptime">100%</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Status:</span>
+                                        <span class="metric-value" id="systemStatus">OPERACIONAL</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </main>
 
-    <script src="js/app.js"></script>
+    <!-- Modal para Adicionar Serviço -->
+    <div class="modal" id="addServiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Novo Serviço</h3>
+                <button class="modal-close" id="closeModal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addServiceForm">
+                    <div class="form-group">
+                        <label for="serviceName">Nome do Serviço</label>
+                        <input type="text" id="serviceName" placeholder="Ex: API de Pagamentos" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="serviceType">Tipo de Serviço</label>
+                        <select id="serviceType" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="http">HTTP/HTTPS</option>
+                            <option value="tcp">TCP</option>
+                            <option value="udp">UDP</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="urlGroup">
+                        <label for="serviceUrl">URL ou Endereço</label>
+                        <input type="text" id="serviceUrl" placeholder="https://api.exemplo.com/health" required>
+                    </div>
+                    
+                    <div class="form-group" id="portGroup" style="display: none;">
+                        <label for="servicePort">Porta</label>
+                        <input type="number" id="servicePort" placeholder="5432" min="1" max="65535">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="checkInterval">Intervalo de Verificação (segundos)</label>
+                        <select id="checkInterval">
+                            <option value="30">30 segundos</option>
+                            <option value="60" selected>1 minuto</option>
+                            <option value="300">5 minutos</option>
+                            <option value="600">10 minutos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="timeout">Timeout (milissegundos)</label>
+                        <input type="number" id="timeout" value="5000" min="1000" max="30000">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelAddService">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="saveService">Adicionar Serviço</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="js/app.js?v=20250115-3"></script>
+    <script src="js/historical-charts.js?v=20250915-4"></script>
+    <script src="js/service-monitoring.js?v=20250915-4"></script>
 </body>
 </html>

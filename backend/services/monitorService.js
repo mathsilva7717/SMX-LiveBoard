@@ -14,7 +14,6 @@ class MonitorService {
         networkStats,
         processes,
         diskLayout,
-        temperature,
         currentLoad,
         networkInterfaces,
         fsSize
@@ -24,7 +23,6 @@ class MonitorService {
         si.networkStats(),
         si.processes(),
         si.diskLayout(),
-        si.cpuTemperature(),
         si.currentLoad(),
         si.networkInterfaces(),
         si.fsSize()
@@ -46,7 +44,6 @@ class MonitorService {
           cores: cpu.cores,
           model: cpu.model,
           speed: cpu.speed,
-          temperature: temperature.main || 0
         },
         memory: {
           total: memory.total,
@@ -150,19 +147,6 @@ class MonitorService {
     }
   }
 
-  async getTemperatureInfo() {
-    try {
-      const temperature = await si.cpuTemperature();
-      return {
-        cpu: temperature.main || 0,
-        max: temperature.max || 0,
-        cores: temperature.cores || []
-      };
-    } catch (error) {
-      console.error('Erro ao obter informações de temperatura:', error);
-      throw error;
-    }
-  }
 }
 
 module.exports = MonitorService;
