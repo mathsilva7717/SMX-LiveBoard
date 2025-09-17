@@ -12,31 +12,39 @@
     "js/**/*",
     "assets/**/*",
     "backend/**/*",
-    "node_modules/**/*",
-    "!node_modules/**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+    "server.js",
+    "package.json",
+    "!node_modules/**/*",
+    "!build.js",
+    "!build-custom.js",
+    "!config*.env",
+    "!*.bat",
+    "!*.md",
     "!.editorconfig",
     "!**/._*",
     "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
     "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
     "!**/{appveyor.yml,.travis.yml,circle.yml}",
-    "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
   ],
-  "extraResources": [
-    {
-      "from": "backend",
-      "to": "backend",
-      "filter": ["**/*"]
-    }
-  ],
+  "asar": false,
   "win": {
     "target": [
       {
         "target": "nsis",
         "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
       }
     ],
     "icon": "assets/icon.ico",
-    "requestedExecutionLevel": "asInvoker"
+    "requestedExecutionLevel": "asInvoker",
+    "artifactName": "SMX-Liveboard.${ext}"
+  },
+  "portable": {
+    "artifactName": "SMX-Liveboard.${ext}"
   },
   "nsis": {
     "oneClick": false,
@@ -66,3 +74,4 @@
     "category": "Utility"
   }
 }
+

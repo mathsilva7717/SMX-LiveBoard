@@ -11,7 +11,7 @@ class HistoricalCharts {
         this.currentPeriod = '1h';
         this.maxDataPoints = 60; // 60 pontos para 1 hora (1 por minuto)
         this.lastUpdateTime = 0;
-        this.updateThrottle = 1000; // Atualizar no máximo a cada 1 segundo
+        this.updateThrottle = 2000; // Atualizar no máximo a cada 2 segundos (melhor performance)
         
         this.init();
     }

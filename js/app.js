@@ -1,9 +1,337 @@
+// Classe para teste de velocidade de internet
+class SpeedTest {
+    constructor() {
+        this.isRunning = false;
+        this.downloadSpeed = 0;
+        this.uploadSpeed = 0;
+        this.testDuration = 10000; // 10 segundos
+        this.chunkSize = 1024 * 1024; // 1MB chunks
+        this.maxSpeed = 500; // 500 MB/s para escala das barras (suporta velocidades altas)
+    }
+
+    // Iniciar teste de velocidade
+    async startTest() {
+        if (this.isRunning) {
+            return;
+        }
+
+        this.isRunning = true;
+        this.downloadSpeed = 0;
+        this.uploadSpeed = 0;
+
+        this.updateStatus('Iniciando teste...', 'testing');
+
+        try {
+            // Teste de download
+            this.updateStatus('Testando download...', 'testing');
+            this.downloadSpeed = await this.testDownload();
+            this.updateSpeedBars();
+
+            // Pequena pausa
+            await this.sleep(1000);
+
+            // Teste de upload
+            this.updateStatus('Testando upload...', 'testing');
+            this.uploadSpeed = await this.testUpload();
+            this.updateSpeedBars();
+
+            // Finalizar
+            this.updateStatus('', '');
+
+        } catch (error) {
+            console.error('❌ Erro no teste de velocidade:', error);
+            this.updateStatus('Erro no teste', 'error');
+        } finally {
+            this.isRunning = false;
+            
+            // Limpar status após 3 segundos
+            setTimeout(() => {
+                this.updateStatus('', '');
+            }, 3000);
+        }
+    }
+
+    // Teste de download
+    async testDownload() {
+        const startTime = Date.now();
+        let totalBytes = 0;
+        const testUrl = 'https://httpbin.org/bytes/10485760'; // 10MB
+
+        try {
+            const response = await fetch(testUrl);
+            const reader = response.body.getReader();
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                totalBytes += value.length;
+                
+                // Atualizar progresso em tempo real
+                const elapsed = (Date.now() - startTime) / 1000;
+                if (elapsed > 0) {
+                    const currentSpeed = (totalBytes / 1024 / 1024) / elapsed;
+                    this.updateDownloadBar(currentSpeed);
+                }
+            }
+
+            const totalTime = (Date.now() - startTime) / 1000;
+            const speedMBps = (totalBytes / 1024 / 1024) / totalTime;
+            
+            return speedMBps;
+        } catch (error) {
+            console.error('Erro no teste de download:', error);
+            return 0;
+        }
+    }
+
+    // Teste de upload
+    async testUpload() {
+        const startTime = Date.now();
+        const testData = new ArrayBuffer(this.chunkSize);
+        const testUrl = 'https://httpbin.org/post';
+        
+        try {
+            const response = await fetch(testUrl, {
+                method: 'POST',
+                body: testData,
+                headers: {
+                    'Content-Type': 'application/octet-stream'
+                }
+            });
+
+            const totalTime = (Date.now() - startTime) / 1000;
+            const speedMBps = (this.chunkSize / 1024 / 1024) / totalTime;
+            
+            return speedMBps;
+        } catch (error) {
+            console.error('Erro no teste de upload:', error);
+            return 0;
+        }
+    }
+
+    // Atualizar barras de velocidade
+    updateSpeedBars() {
+        // Atualizar barra de download
+        const downloadPercent = Math.min((this.downloadSpeed / this.maxSpeed) * 100, 100);
+        const downloadBar = document.getElementById('downloadBar');
+        const downloadSpeedElement = document.getElementById('downloadSpeed');
+        
+        if (downloadBar) {
+            downloadBar.style.height = `${downloadPercent}%`;
+        }
+        
+        if (downloadSpeedElement) {
+            const speedMbps = (this.downloadSpeed * 8).toFixed(2);
+            downloadSpeedElement.textContent = `${speedMbps} Mbps`;
+        }
+
+        // Atualizar barra de upload
+        const uploadPercent = Math.min((this.uploadSpeed / this.maxSpeed) * 100, 100);
+        const uploadBar = document.getElementById('uploadBar');
+        const uploadSpeedElement = document.getElementById('uploadSpeed');
+        
+        if (uploadBar) {
+            uploadBar.style.height = `${uploadPercent}%`;
+        }
+        
+        if (uploadSpeedElement) {
+            const speedMbps = (this.uploadSpeed * 8).toFixed(2);
+            uploadSpeedElement.textContent = `${speedMbps} Mbps`;
+        }
+    }
+
+    // Atualizar barra de download em tempo real
+    updateDownloadBar(speed) {
+        const downloadPercent = Math.min((speed / this.maxSpeed) * 100, 100);
+        const downloadBar = document.getElementById('downloadBar');
+        const downloadSpeedElement = document.getElementById('downloadSpeed');
+        
+        if (downloadBar) {
+            downloadBar.style.height = `${downloadPercent}%`;
+        }
+        
+        if (downloadSpeedElement) {
+            const speedMbps = (speed * 8).toFixed(2);
+            downloadSpeedElement.textContent = `${speedMbps} Mbps`;
+        }
+    }
+
+    // Atualizar status do teste
+    updateStatus(message, type = '') {
+        const statusElement = document.getElementById('speedTestStatus');
+        if (statusElement) {
+            statusElement.textContent = message;
+            statusElement.className = `speed-test-status ${type}`;
+        }
+    }
+
+    // Função auxiliar para sleep
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Obter velocidades atuais
+    getSpeeds() {
+        return {
+            download: this.downloadSpeed,
+            upload: this.uploadSpeed
+        };
+    }
+
+    // Iniciar teste automático periódico
+    startAutoTest(intervalMinutes = 3) {
+        // Primeiro teste já foi iniciado automaticamente
+        // Agendar próximos testes
+        setInterval(() => {
+            if (!this.isRunning) {
+                this.startTest();
+            }
+        }, intervalMinutes * 60 * 1000); // Converter minutos para milissegundos
+    }
+}
+
+// Sistema de Notificações Toast
+class ToastManager {
+    constructor() {
+        this.container = document.getElementById('toastContainer');
+        this.toasts = new Map();
+    }
+
+    show(type, title, message, duration = 4000) {
+        const toastId = Date.now() + Math.random();
+        const toast = this.createToast(type, title, message, toastId);
+        
+        this.container.appendChild(toast);
+        this.toasts.set(toastId, toast);
+        
+        // Animar entrada
+        setTimeout(() => toast.classList.add('show'), 10);
+        
+        // Auto-remover
+        setTimeout(() => this.hide(toastId), duration);
+        
+        return toastId;
+    }
+
+    createToast(type, title, message, id) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.dataset.id = id;
+        
+        const icon = this.getIcon(type);
+        
+        toast.innerHTML = `
+            <div class="toast-icon">${icon}</div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" onclick="toastManager.hide(${id})">×</button>
+        `;
+        
+        return toast;
+    }
+
+    getIcon(type) {
+        const icons = {
+            success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>',
+            error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+            info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+            warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+        };
+        return icons[type] || icons.info;
+    }
+
+    hide(id) {
+        const toast = this.toasts.get(id);
+        if (toast) {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+                this.toasts.delete(id);
+            }, 300);
+        }
+    }
+}
+
+// Instância global do gerenciador de toast
+const toastManager = new ToastManager();
+
+// Função global para iniciar teste de velocidade (chamada pelo botão)
+function startSpeedTest() {
+    if (window.smxLiveBoard && window.smxLiveBoard.speedTest) {
+        const button = document.getElementById('speedTestButton');
+        if (button) {
+            button.classList.add('testing');
+            button.disabled = true;
+            button.title = 'Testando velocidade...';
+        }
+        
+        // Mostrar notificação de início
+        toastManager.show('info', 'Teste de Velocidade', 'Iniciando teste de velocidade da internet...', 2000);
+        
+        window.smxLiveBoard.speedTest.startTest().then(() => {
+            // Mostrar estado de sucesso no botão
+            if (button) {
+                button.classList.remove('testing');
+                button.classList.add('success');
+                button.disabled = false;
+                button.title = 'Teste concluído com sucesso!';
+            }
+            
+            // Mostrar notificação de sucesso com resultados
+            const speeds = window.smxLiveBoard.speedTest.getSpeeds();
+            const downloadMbps = (speeds.download * 8).toFixed(2);
+            const uploadMbps = (speeds.upload * 8).toFixed(2);
+            
+            toastManager.show('success', 'Teste Concluído!', 
+                `Download: ${downloadMbps} Mbps | Upload: ${uploadMbps} Mbps`, 5000);
+            
+            // Restaurar botão após 3 segundos
+            setTimeout(() => {
+                if (button) {
+                    button.classList.remove('success');
+                    button.title = 'Teste de Velocidade';
+                }
+            }, 3000);
+                
+        }).catch((error) => {
+            console.error('Erro no teste de velocidade:', error);
+            
+            // Mostrar estado de erro no botão
+            if (button) {
+                button.classList.remove('testing');
+                button.classList.add('error');
+                button.disabled = false;
+                button.title = 'Erro no teste';
+            }
+            
+            // Mostrar notificação de erro
+            toastManager.show('error', 'Erro no Teste', 
+                'Falha ao executar teste de velocidade. Tente novamente.', 4000);
+            
+            // Restaurar botão após 3 segundos
+            setTimeout(() => {
+                if (button) {
+                    button.classList.remove('error');
+                    button.title = 'Teste de Velocidade';
+                }
+            }, 3000);
+        });
+    } else {
+        toastManager.show('error', 'Erro', 'Sistema não disponível. Tente novamente em alguns segundos.', 3000);
+    }
+}
+
 // SMX LiveBoard - JavaScript Vanilla
 class SMXLiveBoard {
     constructor() {
         this.systemData = null;
+        this.speedTest = new SpeedTest();
         this.isConnected = false;
-        this.ws = null;
         this.socket = null;
         this.timeInterval = null;
         this.dataInterval = null;
@@ -13,13 +341,9 @@ class SMXLiveBoard {
         this.diskDataInitialized = false;
         this.lastDataTime = null;
         
-        // Histórico para sparklines
-        this.history = {
-            cpu: [],
-            ram: [],
-            disk: [],
-            network: []
-        };
+        // Histórico da CPU para linha de tendência
+        this.cpuHistory = [];
+        this.maxHistoryPoints = 20;
         
         // DNS e latência
         this.dnsInfo = {
@@ -32,15 +356,15 @@ class SMXLiveBoard {
 
     init() {
         if (this.isInitialized) {
-            console.log('SMX LiveBoard já foi inicializado');
             return;
         }
         
-        console.log('Inicializando SMX LiveBoard...');
         this.updateTime();
         this.updateGreeting(); // Adicionar saudação dinâmica
         this.startTimeInterval();
         this.setConnectionStatus(false); // Iniciar como desconectado
+        this.showProcessesLoading(); // Mostrar loading inicial da tabela de processos
+        this.showRamLoading(); // Mostrar loading inicial do card de RAM
         this.connectWebSocket(); // Conectar ao WebSocket real
         this.setupHeaderControls();
         this.startNetworkMonitoring();
@@ -52,7 +376,6 @@ class SMXLiveBoard {
         // Disponibilizar instância globalmente para outros módulos
         window.smxLiveBoard = this;
         
-        console.log('SMX LiveBoard inicializado com sucesso');
     }
 
     // Atualizar saudação dinâmica
@@ -159,7 +482,6 @@ class SMXLiveBoard {
     connectWebSocket() {
         // Evitar múltiplas conexões
         if (this.socket && this.socket.connected) {
-            console.log('Socket.IO já conectado');
             return;
         }
 
@@ -183,10 +505,6 @@ class SMXLiveBoard {
                 });
                 
                 this.socket.on('connect', () => {
-                    console.log('✅ Conectado ao Socket.IO');
-                    console.log(`   🆔 Socket ID: ${this.socket.id}`);
-                    console.log(`   🚀 Transport: ${this.socket.io.engine.transport.name}`);
-                    console.log(`   🕐 Timestamp: ${new Date().toISOString()}`);
                     
                     this.setConnectionStatus(true);
                     // Resetar flag de dados do disco para permitir atualização na reconexão
@@ -219,22 +537,16 @@ class SMXLiveBoard {
                 });
 
                 this.socket.on('disconnect', (reason) => {
-                    console.log('❌ Desconectado do Socket.IO');
-                    console.log(`   📋 Motivo: ${reason}`);
-                    console.log(`   🕐 Timestamp: ${new Date().toISOString()}`);
                     
                     this.setConnectionStatus(false);
                     
                     // Só tentar reconectar se não foi uma desconexão intencional
                     if (reason !== 'io client disconnect') {
-                        console.log('🔄 Tentando reconectar automaticamente...');
                         // A reconexão automática já está configurada no Socket.IO
                     }
                 });
 
                 this.socket.on('connect_error', (error) => {
-                    console.log('❌ Erro ao conectar Socket.IO:', error.message);
-                    console.log(`   🕐 Timestamp: ${new Date().toISOString()}`);
                     this.setConnectionStatus(false);
                     // Tentar fallback para API REST
                     this.startRestFallback();
@@ -242,80 +554,77 @@ class SMXLiveBoard {
 
                 // Eventos de reconexão
                 this.socket.on('reconnect', (attemptNumber) => {
-                    console.log(`🔄 Reconectado ao Socket.IO (tentativa ${attemptNumber})`);
-                    console.log(`   🆔 Socket ID: ${this.socket.id}`);
-                    console.log(`   🕐 Timestamp: ${new Date().toISOString()}`);
                 });
 
                 this.socket.on('reconnect_attempt', (attemptNumber) => {
-                    console.log(`🔄 Tentativa de reconexão ${attemptNumber}...`);
                 });
 
                 this.socket.on('reconnect_error', (error) => {
-                    console.log(`❌ Erro na reconexão: ${error.message}`);
                 });
 
                 this.socket.on('reconnect_failed', () => {
-                    console.log('❌ Falha na reconexão - usando fallback REST');
                     this.startRestFallback();
                 });
 
                 // Evento de ping/pong para monitoramento
                 this.socket.on('pong', (data) => {
                     const latency = Date.now() - data.timestamp;
-                    console.log(`🏓 Pong recebido - Latência: ${latency}ms`);
+                });
+
+                // ===== EVENTOS DO TERMINAL =====
+                
+                // Terminal criado
+                this.socket.on('terminal:created', (data) => {
+                    this.terminalSessionId = data.sessionId;
+                    this.updateTerminalStatus('Conectado', 'connected');
+                });
+
+                // Output do terminal em tempo real
+                this.socket.on('terminal:output', (data) => {
+                    if (data.sessionId === this.terminalSessionId) {
+                        const output = document.getElementById('terminalOutput');
+                        if (output) {
+                            output.innerHTML += `<div class="terminal-output-text">${data.output}</div>`;
+                            output.scrollTop = output.scrollHeight;
+                        }
+                    }
+                });
+
+                // Erro do terminal
+                this.socket.on('terminal:error', (data) => {
+                    const output = document.getElementById('terminalOutput');
+                    if (output) {
+                        output.innerHTML += `<div class="terminal-error">Erro: ${data.error}</div>`;
+                        output.scrollTop = output.scrollHeight;
+                    }
+                    this.updateTerminalStatus('Erro', 'error');
+                });
+
+                // Sugestões de autocompletar
+                this.socket.on('terminal:suggestions', (data) => {
+                    this.showSuggestions(data.suggestions);
+                });
+
+                // Terminal fechado
+                this.socket.on('terminal:closed', (data) => {
+                    if (data.sessionId === this.terminalSessionId) {
+                        this.terminalSessionId = null;
+                        this.updateTerminalStatus('Desconectado', 'disconnected');
+                    }
                 });
             } else {
-                // Fallback para WebSocket se Socket.IO não estiver disponível
-                this.connectWebSocketFallback();
+                // Socket.IO não disponível, usar fallback REST
+                this.startRestFallback();
             }
         } catch (error) {
-            console.error('Erro ao conectar:', error);
-            this.setConnectionStatus(false);
-            this.connectWebSocketFallback();
-        }
-    }
-
-    // Fallback para WebSocket
-    connectWebSocketFallback() {
-        try {
-            this.ws = new WebSocket('ws://localhost:8080');
-            
-            this.ws.onopen = () => {
-                console.log('Conectado ao WebSocket');
-                this.setConnectionStatus(true);
-            };
-
-            this.ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                this.updateSystemData(data);
-            };
-
-            this.ws.onclose = () => {
-                console.log('Desconectado do WebSocket');
-                this.setConnectionStatus(false);
-                // Tentar reconectar após 5 segundos
-                setTimeout(() => {
-                    this.connectWebSocket();
-                }, 5000);
-            };
-
-            this.ws.onerror = (error) => {
-                console.error('Erro no WebSocket:', error);
-                this.setConnectionStatus(false);
-                // Tentar API REST como último recurso
-                this.startRestFallback();
-            };
-        } catch (error) {
-            console.error('Erro ao conectar WebSocket:', error);
             this.setConnectionStatus(false);
             this.startRestFallback();
         }
     }
 
+
     // Fallback para API REST
     startRestFallback() {
-        console.log('Iniciando fallback para API REST');
         this.setConnectionStatus(false);
         
         // Limpar intervalo anterior se existir
@@ -335,12 +644,8 @@ class SMXLiveBoard {
     // Fallback para API REST
     async fetchSystemData() {
         try {
-            // Tentar primeiro o servidor principal (porta 3000)
-            let response = await fetch('http://localhost:3000/api/system/metrics');
-            if (!response.ok) {
-                // Se falhar, tentar o servidor backend (porta 3002)
-                response = await fetch('http://localhost:3002/api/system');
-            }
+            // Tentar apenas o servidor principal (porta 3000)
+            const response = await fetch('http://localhost:3000/api/system/metrics');
             
             if (response.ok) {
                 const data = await response.json();
@@ -350,13 +655,14 @@ class SMXLiveBoard {
                     this.updateDiskStaticData();
                     this.diskDataInitialized = true;
                 }
+                return data; // Retornar os dados para uso imediato
             } else {
                 throw new Error('Servidor não disponível');
             }
         } catch (error) {
-            console.error('Erro ao buscar dados do sistema:', error);
             // Manter status de desconectado
             this.setConnectionStatus(false);
+            return null; // Retornar null em caso de erro
         }
     }
 
@@ -385,30 +691,49 @@ class SMXLiveBoard {
 
     // Atualizar dados do sistema
     updateSystemData(data) {
-        this.systemData = data;
-        this.hideLoading();
-        
-        this.updateSummaryCards();
-        this.updateSystemInfo();
-        this.updateProcesses();
-        this.updateSparklines();
-        this.checkAlerts();
-        this.updateSystemDetails();
+        try {
+            if (!data) {
+                return;
+            }
+            
+            // Debug removido - dados da CPU funcionando
+            
+            // Preservar processos existentes se não estiverem nos novos dados
+            if (this.systemData && this.systemData.processes && !data.processes) {
+                data.processes = this.systemData.processes;
+            }
+            
+            this.systemData = data;
+            this.hideLoading();
+            
+            this.updateSummaryCards();
+            this.updateSystemInfo();
+            this.updateProcesses();
+            this.checkAlerts();
+            this.updateSystemDetails();
+        } catch (error) {
+        }
     }
 
     // Atualizar dados de processos recebidos do backend
     updateProcessesData(data) {
         if (data) {
+            // Debug: verificar estrutura dos dados recebidos
+            console.log('📊 Dados de processos recebidos:', data);
+            
             // Atualizar os dados de processos no systemData
             if (!this.systemData) {
                 this.systemData = {};
             }
             
-            // O backend envia os dados diretamente, não em um objeto processes
-            this.systemData.processes = data.processes || data;
+            // O backend envia os dados diretamente como { list: [...], totals: {...} }
+            this.systemData.processes = data;
             
             // Atualizar a tabela de processos
             this.updateProcesses();
+        } else {
+            // Se não há dados, mostrar loading
+            this.showProcessesLoading();
         }
     }
 
@@ -421,6 +746,34 @@ class SMXLiveBoard {
         const diskUsed = this.systemData.disk.used || 0;
         const diskTotal = this.systemData.disk.total || 0;
         const diskFree = this.systemData.disk.free || 0;
+        const diskName = this.systemData.disk.name || 'Disco Desconhecido';
+        const diskType = this.systemData.disk.type || 'Desconhecido';
+        const totalDisks = this.systemData.disk.totalDisks || 1;
+        
+        // Atualizar informações do disco (nome e tipo)
+        const diskModelElement = document.getElementById('diskModel');
+        const diskTypeElement = document.getElementById('diskType');
+        const diskCountElement = document.getElementById('diskCount');
+        
+        if (diskModelElement) {
+            diskModelElement.textContent = diskName;
+            diskModelElement.title = diskName; // Tooltip com nome completo
+        }
+        if (diskTypeElement) {
+            diskTypeElement.textContent = diskType;
+            diskTypeElement.setAttribute('data-type', diskType.toLowerCase());
+        }
+        
+        // Mostrar contador de discos se houver múltiplos
+        if (diskCountElement) {
+            if (totalDisks > 1) {
+                diskCountElement.style.display = 'block';
+                diskCountElement.textContent = `Disco Principal (${totalDisks} total)`;
+                diskCountElement.title = `Sistema com ${totalDisks} discos. Mostrando o disco principal.`;
+            } else {
+                diskCountElement.style.display = 'none';
+            }
+        }
         
         // Atualizar elementos principais
         const diskUsageElement = document.getElementById('diskUsage');
@@ -451,6 +804,67 @@ class SMXLiveBoard {
         if (diskFreeGrid) {
             diskFreeGrid.textContent = this.formatBytes(diskFree);
         }
+        
+        // Atualizar barra de progresso do disco
+        this.updateDiskProgressBar(diskUsage);
+    }
+
+    // Atualizar barra de progresso do disco com animação
+    updateDiskProgressBar(usagePercentage) {
+        const diskUsageBar = document.getElementById('diskUsageBar');
+        
+        if (!diskUsageBar) return;
+        
+        // Limitar a porcentagem para evitar valores extremos
+        const clampedPercentage = Math.min(Math.max(usagePercentage, 0), 100);
+        
+        // Aplicar transição suave
+        diskUsageBar.style.transition = 'width 1.2s ease-in-out, background 0.8s ease-in-out';
+        
+        // Atualizar largura da barra
+        diskUsageBar.style.width = `${clampedPercentage}%`;
+        
+        // Aplicar cores dinâmicas baseadas no uso
+        let barColor, barGradient;
+        
+        if (clampedPercentage >= 90) {
+            // Crítico - Vermelho
+            barColor = '#ff4757';
+            barGradient = 'linear-gradient(90deg, #ff4757, #ff3742)';
+        } else if (clampedPercentage >= 80) {
+            // Alto - Laranja
+            barColor = '#ff6b35';
+            barGradient = 'linear-gradient(90deg, #ff6b35, #ff5722)';
+        } else if (clampedPercentage >= 70) {
+            // Médio-Alto - Amarelo
+            barColor = '#ffaa00';
+            barGradient = 'linear-gradient(90deg, #ffaa00, #ff8800)';
+        } else if (clampedPercentage >= 50) {
+            // Médio - Laranja Claro
+            barColor = '#ffaa00';
+            barGradient = 'linear-gradient(90deg, #ffaa00, #ff8800)';
+        } else {
+            // Baixo - Verde
+            barColor = '#00ff88';
+            barGradient = 'linear-gradient(90deg, #00ff88, #00cc66)';
+        }
+        
+        // Aplicar cor e gradiente
+        diskUsageBar.style.background = barGradient;
+        
+        // Adicionar efeito de brilho baseado no uso
+        if (clampedPercentage > 80) {
+            diskUsageBar.style.boxShadow = `0 0 15px ${barColor}40, inset 0 1px 0 rgba(255,255,255,0.2)`;
+        } else {
+            diskUsageBar.style.boxShadow = `0 0 8px ${barColor}30, inset 0 1px 0 rgba(255,255,255,0.1)`;
+        }
+        
+        // Adicionar animação de pulso para uso crítico
+        if (clampedPercentage >= 90) {
+            diskUsageBar.style.animation = 'criticalPulse 2s ease-in-out infinite';
+        } else {
+            diskUsageBar.style.animation = 'none';
+        }
     }
 
     // Esconder loading e mostrar dashboard
@@ -464,87 +878,391 @@ class SMXLiveBoard {
         }
     }
 
+    // Métodos para mostrar/esconder loading nos cards
+    showCpuLoading() {
+        const cpuGauge = document.getElementById('cpuGauge');
+        const cpuGaugeValue = document.getElementById('cpuGaugeValue');
+        
+        if (cpuGauge) {
+            cpuGauge.style.opacity = '0.5';
+        }
+        if (cpuGaugeValue) {
+            cpuGaugeValue.textContent = 'Carregando...';
+        }
+    }
+
+    hideCpuLoading() {
+        const cpuGauge = document.getElementById('cpuGauge');
+        if (cpuGauge) {
+            cpuGauge.style.opacity = '1';
+        }
+    }
+
+    showDiskLoading() {
+        const diskGauge = document.getElementById('diskGauge');
+        const diskGaugeValue = document.getElementById('diskGaugeValue');
+        
+        if (diskGauge) {
+            diskGauge.style.opacity = '0.5';
+        }
+        if (diskGaugeValue) {
+            diskGaugeValue.textContent = 'Carregando...';
+        }
+    }
+
+    hideDiskLoading() {
+        const diskGauge = document.getElementById('diskGauge');
+        if (diskGauge) {
+            diskGauge.style.opacity = '1';
+        }
+    }
+
+    // Métodos para mostrar/esconder loading da tabela de processos
+    showProcessesLoading() {
+        const tbody = document.getElementById('processesTableBody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #999; padding: 20px;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <div class="loading-spinner" style="width: 20px; height: 20px; border: 2px solid #333; border-top: 2px solid #00d4ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            Carregando processos...
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    hideProcessesLoading() {
+        // O loading será removido quando os dados reais chegarem
+        // Este método é chamado quando há dados para exibir
+    }
+
+    // Métodos para mostrar/esconder loading do card de RAM
+    showRamLoading() {
+        const ramGaugeValue = document.getElementById('ramGaugeValue');
+        const ramUsageElement = document.getElementById('ramUsage');
+        const ramTotalElement = document.getElementById('ramTotal');
+        const memoryTypeElement = document.getElementById('memoryType');
+        
+        if (ramGaugeValue) {
+            ramGaugeValue.textContent = 'Carregando...';
+        }
+        if (ramUsageElement) {
+            ramUsageElement.textContent = 'Carregando...';
+        }
+        if (ramTotalElement) {
+            ramTotalElement.textContent = 'Carregando...';
+        }
+        if (memoryTypeElement) {
+            memoryTypeElement.textContent = 'Carregando...';
+        }
+        
+        // Diminuir opacidade das barras de memória
+        const memoryBars = document.querySelectorAll('.memory-bar .bar-fill');
+        memoryBars.forEach(bar => {
+            bar.style.opacity = '0.3';
+        });
+    }
+
+    hideRamLoading() {
+        // Restaurar opacidade das barras de memória
+        const memoryBars = document.querySelectorAll('.memory-bar .bar-fill');
+        memoryBars.forEach(bar => {
+            bar.style.opacity = '1';
+        });
+    }
+
     // Atualizar indicadores circulares
     updateSummaryCards() {
         if (!this.systemData) return;
 
         // CPU
         const cpuUsage = this.systemData.cpu?.usage || 0;
-        this.updateCircularGauge('cpuGauge', 'cpuGaugeValue', cpuUsage, `${cpuUsage.toFixed(1)}%`);
+        const cpuStatus = this.systemData.cpu?.status;
+        
+        // Mostrar loading se CPU está carregando
+        if (cpuStatus === 'loading') {
+            this.showCpuLoading();
+        } else {
+            this.hideCpuLoading();
+            this.updateCpuGauge(cpuUsage);
+        }
 
         // Memória
         const memUsed = this.systemData.memory?.used || 0;
         const memTotal = this.systemData.memory?.total || 0;
         const memUsage = this.systemData.memory?.usage || 0;
         
-        // Atualizar porcentagem central
-        const ramGaugeValue = document.getElementById('ramGaugeValue');
-        if (ramGaugeValue) {
-            ramGaugeValue.textContent = `${memUsage.toFixed(1)}%`;
-        }
-        
-        // Atualizar barras de memória
-        this.updateMemoryBars(memUsage);
-        
-        const ramUsageElement = document.getElementById('ramUsage');
-        const ramTotalElement = document.getElementById('ramTotal');
-        
-        if (ramUsageElement) {
-            ramUsageElement.textContent = this.formatBytes(memUsed);
-        }
-        if (ramTotalElement) {
-            ramTotalElement.textContent = `de ${this.formatBytes(memTotal)}`;
-        }
-
-        // Disco - apenas atualizar gauge, dados estáticos são atualizados apenas na conexão
-        const diskUsage = this.systemData.disk?.usage || 0;
-        this.updateCircularGauge('diskGauge', 'diskGaugeValue', diskUsage, `${diskUsage.toFixed(1)}%`);
-
-        // Rede
-        const networkInterface = this.systemData.network?.interface || 'Desconhecido';
-        const networkStatusElement = document.getElementById('networkStatus');
-        
-        // Para rede, usamos um valor baseado na velocidade de download (mais representativa)
-        const downloadSpeed = this.systemData.network?.downloadSpeed || 0;
-        const uploadSpeed = this.systemData.network?.uploadSpeed || 0;
-        
-        // Calcular porcentagem com escala ultra sensível
-        const kb = 1024;
-        const mb = kb * 1024;
-        let networkValue;
-        
-        if (downloadSpeed === 0) {
-            networkValue = 0;
+        // Verificar se há dados de memória válidos
+        if (memTotal === 0 || !this.systemData.memory) {
+            this.showRamLoading();
         } else {
-            const speedKBps = downloadSpeed / kb;
-            const speedMBps = downloadSpeed / mb;
+            this.hideRamLoading();
             
-            // Para velocidades muito baixas (0-100 KB/s), usar escala ultra amplificada
-            if (speedKBps <= 100) {
-                networkValue = Math.min((speedKBps / 100) * 60, 60); // 0-100 KB/s = 0-60%
+            // Atualizar porcentagem central
+            const ramGaugeValue = document.getElementById('ramGaugeValue');
+            if (ramGaugeValue) {
+                ramGaugeValue.textContent = `${memUsage.toFixed(1)}%`;
             }
-            // Para velocidades baixas (100 KB/s - 1 MB/s), usar escala amplificada
-            else if (speedMBps <= 1) {
-                const kbRange = speedKBps - 100; // 0-900 KB
-                networkValue = Math.min(60 + (kbRange / 900) * 30, 90); // 100-1000 KB/s = 60-90%
+            
+            // Atualizar barras de memória
+            this.updateMemoryBars(memUsage);
+            
+            const ramUsageElement = document.getElementById('ramUsage');
+            const ramTotalElement = document.getElementById('ramTotal');
+            const memoryTypeElement = document.getElementById('memoryType');
+            
+            if (ramUsageElement) {
+                ramUsageElement.textContent = this.formatBytes(memUsed);
             }
-            // Para velocidades normais (1+ MB/s), usar escala normal
-            else {
-                networkValue = Math.min(90 + ((speedMBps - 1) / 4) * 10, 100); // 1-5 MB/s = 90-100%
+            if (ramTotalElement) {
+                ramTotalElement.textContent = `de ${this.formatBytes(memTotal)}`;
+            }
+            if (memoryTypeElement) {
+                const memoryType = this.systemData.memory?.type || 'Desconhecido';
+                memoryTypeElement.textContent = memoryType;
             }
         }
+
+        // Disco - verificar status de loading
+        const diskUsage = this.systemData.disk?.usage || 0;
+        const diskStatus = this.systemData.disk?.status;
         
-        // Mostrar interface ou velocidade de download no gauge
-        const displayValue = downloadSpeed > 0 ? this.formatNetworkSpeed(downloadSpeed) : networkInterface.toUpperCase();
+        if (diskStatus === 'loading') {
+            this.showDiskLoading();
+        } else {
+            this.hideDiskLoading();
+            this.updateCircularGauge('diskGauge', 'diskGaugeValue', diskUsage, `${diskUsage.toFixed(1)}%`);
+            this.updateDiskProgressBar(diskUsage);
+        }
+
+        // Rede - apenas informações de interface do backend
+        const networkInterface = this.systemData.network?.interface || 'Desconhecido';
+        const networkIP = this.systemData.network?.ipAddress || 'N/A';
+        const networkType = this.systemData.network?.type || 'unknown';
+        const networkOperstate = this.systemData.network?.operstate || 'unknown';
+        const networkData = this.systemData.network; // Dados completos de rede
         
-        this.updateCircularGauge('networkGauge', 'networkGaugeValue', networkValue, displayValue);
+        const networkStatusElement = document.getElementById('networkStatus');
+        const networkIPElement = document.getElementById('networkIP');
         
+        // Atualizar status da interface
         if (networkStatusElement) {
-            networkStatusElement.textContent = networkInterface;
+            networkStatusElement.textContent = networkInterface.toUpperCase();
         }
         
-        // Atualizar velocidades de rede
-        this.updateNetworkSpeeds();
+        if (networkIPElement) {
+            // Remover prefixo "IPv4:" se existir
+            const cleanIP = networkIP.replace(/^IPv4:\s*/, '');
+            networkIPElement.textContent = cleanIP;
+        }
+        
+        // Atualizar status de conexão baseado no operstate
+        this.updateNetworkConnectionStatus(networkOperstate, networkType);
+        
+        // Atualizar barrinhas de velocidade de rede
+        this.updateNetworkSpeedBars(networkData);
+    }
+
+    // Atualizar status de conexão da rede
+    updateNetworkConnectionStatus(operstate, type) {
+        const statusDetail = document.getElementById('networkStatusDetail');
+        
+        if (operstate === 'up') {
+            // Interface ativa
+            if (statusDetail) {
+                statusDetail.textContent = `${type.toUpperCase()} - Conectado`;
+                statusDetail.style.color = '#00ff88';
+            }
+        } else {
+            // Interface inativa
+            if (statusDetail) {
+                statusDetail.textContent = `${type.toUpperCase()} - Desconectado`;
+                statusDetail.style.color = '#ff6b6b';
+            }
+        }
+    }
+
+    // Atualizar barrinhas de velocidade de rede
+    updateNetworkSpeedBars(networkData) {
+        if (!networkData) return;
+
+        // Atualizar barra de download
+        const downloadSpeed = networkData.download || 0;
+        const downloadBar = document.getElementById('downloadBar');
+        const downloadSpeedElement = document.getElementById('downloadSpeed');
+        const downloadSpeedDetail = document.getElementById('downloadSpeedDetail');
+        
+        if (downloadBar) {
+            // Converter Mbps para porcentagem (máximo 500 Mbps = 100%)
+            const downloadPercent = Math.min((downloadSpeed / 500) * 100, 100);
+            downloadBar.style.height = `${downloadPercent}%`;
+            
+            // Adicionar classe de atividade se houver velocidade
+            if (downloadSpeed > 0) {
+                downloadBar.classList.add('active');
+            } else {
+                downloadBar.classList.remove('active');
+            }
+        }
+        
+        if (downloadSpeedElement) {
+            downloadSpeedElement.textContent = `${downloadSpeed.toFixed(2)} Mbps`;
+        }
+        
+        if (downloadSpeedDetail) {
+            downloadSpeedDetail.textContent = `${downloadSpeed.toFixed(1)} Mbps`;
+        }
+
+        // Atualizar barra de upload
+        const uploadSpeed = networkData.upload || 0;
+        const uploadBar = document.getElementById('uploadBar');
+        const uploadSpeedElement = document.getElementById('uploadSpeed');
+        const uploadSpeedDetail = document.getElementById('uploadSpeedDetail');
+        
+        if (uploadBar) {
+            // Converter Mbps para porcentagem (máximo 500 Mbps = 100%)
+            const uploadPercent = Math.min((uploadSpeed / 500) * 100, 100);
+            uploadBar.style.height = `${uploadPercent}%`;
+            
+            // Adicionar classe de atividade se houver velocidade
+            if (uploadSpeed > 0) {
+                uploadBar.classList.add('active');
+            } else {
+                uploadBar.classList.remove('active');
+            }
+        }
+        
+        if (uploadSpeedElement) {
+            uploadSpeedElement.textContent = `${uploadSpeed.toFixed(2)} Mbps`;
+        }
+        
+        if (uploadSpeedDetail) {
+            uploadSpeedDetail.textContent = `${uploadSpeed.toFixed(1)} Mbps`;
+        }
+    }
+
+    // Atualizar gauge da CPU com ponteiro
+    updateCpuGauge(percentage) {
+        // Debug removido - função funcionando
+        
+        const gauge = document.getElementById('cpuGauge');
+        const valueElement = document.getElementById('cpuGaugeValue');
+        const needle = document.getElementById('cpuNeedle');
+        const cpuBrandElement = document.getElementById('cpuBrand');
+        
+        // Atualizar brand da CPU
+        if (cpuBrandElement) {
+            const cpuBrand = this.systemData.cpu?.brand || 'Unknown';
+            cpuBrandElement.textContent = cpuBrand;
+        } else {
+            console.warn('❌ Elemento cpuBrand não encontrado');
+        }
+        
+        // Limitar a porcentagem para evitar valores extremos
+        const clampedPercentage = Math.min(Math.max(percentage, 0), 100);
+        
+        if (gauge && valueElement) {
+            // Atualizar o progresso do círculo
+            const circumference = 314;
+            const offset = circumference - (clampedPercentage / 100) * circumference;
+            gauge.style.strokeDashoffset = offset;
+            
+            // Aplicar cor do gauge baseada na porcentagem
+            if (clampedPercentage >= 90) {
+                gauge.style.stroke = '#ff4444'; // Vermelho para crítico
+            } else if (clampedPercentage >= 80) {
+                gauge.style.stroke = '#ffaa00'; // Laranja para warning
+            } else {
+                gauge.style.stroke = '#00d4ff'; // Azul padrão
+            }
+            
+            // Atualizar o valor de porcentagem
+            valueElement.textContent = `${clampedPercentage.toFixed(1)}%`;
+        }
+        
+        if (needle) {
+            // Lógica do ponteiro de carro: 0% = embaixo (-90°), 100% = em cima (0°)
+            // 0% = -90°, 50% = -45°, 100% = 0°
+            const rotation = -90 + (clampedPercentage / 100) * 90;
+            needle.style.transform = `rotate(${rotation}deg)`;
+            
+            // Aplicar cor baseada na porcentagem
+            let needleColor;
+            if (clampedPercentage >= 90) {
+                needleColor = '#ff4444'; // Vermelho para crítico
+            } else if (clampedPercentage >= 80) {
+                needleColor = '#ffaa00'; // Laranja para warning
+            } else {
+                needleColor = '#00d4ff'; // Azul padrão
+            }
+            
+            // Aplicar cor tanto no fill quanto no stroke
+            needle.style.fill = needleColor;
+            needle.style.stroke = needleColor;
+            
+            // Aplicar cor nos elementos filhos (line e circle)
+            const line = needle.querySelector('line');
+            const circle = needle.querySelector('circle');
+            if (line) line.style.stroke = needleColor;
+            if (circle) circle.style.fill = needleColor;
+        }
+        
+        // Atualizar linha de tendência da CPU
+        this.updateCpuTrendLine(clampedPercentage);
+    }
+
+    // Atualizar linha de tendência da CPU
+    updateCpuTrendLine(percentage) {
+        // Adicionar novo valor ao histórico
+        this.cpuHistory.push(percentage);
+        
+        // Manter apenas os últimos pontos
+        if (this.cpuHistory.length > this.maxHistoryPoints) {
+            this.cpuHistory.shift();
+        }
+        
+        // Desenhar no canvas
+        const canvas = document.getElementById('cpuTrend');
+        if (!canvas) {
+            console.warn('❌ Canvas cpuTrend não encontrado');
+            return;
+        }
+        if (this.cpuHistory.length < 2) {
+            return;
+        }
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Limpar canvas
+        ctx.clearRect(0, 0, width, height);
+        
+        // Configurar estilo da linha
+        ctx.strokeStyle = percentage >= 90 ? '#ff4444' : percentage >= 80 ? '#ffaa00' : '#00d4ff';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Calcular pontos da linha
+        const stepX = width / (this.cpuHistory.length - 1);
+        
+        ctx.beginPath();
+        this.cpuHistory.forEach((value, index) => {
+            const x = index * stepX;
+            const y = height - (value / 100) * height; // Inverter Y (0% = baixo, 100% = cima)
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        
+        ctx.stroke();
     }
 
     // Atualizar gauge circular
@@ -606,81 +1324,6 @@ class SMXLiveBoard {
         });
     }
 
-    // Atualizar velocidades de rede
-    updateNetworkSpeeds() {
-        const downloadSpeed = this.systemData.network?.downloadSpeed || 0;
-        const uploadSpeed = this.systemData.network?.uploadSpeed || 0;
-        
-        
-        // Atualizar valores principais com formatação inteligente
-        const downloadSpeedElement = document.getElementById('downloadSpeed');
-        const uploadSpeedElement = document.getElementById('uploadSpeed');
-        
-        if (downloadSpeedElement) {
-            downloadSpeedElement.textContent = this.formatNetworkSpeed(downloadSpeed);
-        }
-        if (uploadSpeedElement) {
-            uploadSpeedElement.textContent = this.formatNetworkSpeed(uploadSpeed);
-        }
-        
-        // Atualizar valores detalhados (usar formatação inteligente)
-        const downloadSpeedDetail = document.getElementById('downloadSpeedDetail');
-        const uploadSpeedDetail = document.getElementById('uploadSpeedDetail');
-        
-        if (downloadSpeedDetail) {
-            downloadSpeedDetail.textContent = this.formatNetworkSpeed(downloadSpeed);
-        }
-        if (uploadSpeedDetail) {
-            uploadSpeedDetail.textContent = this.formatNetworkSpeed(uploadSpeed);
-        }
-        
-        // Atualizar barras de velocidade
-        this.updateNetworkSpeedBars(downloadSpeed, uploadSpeed);
-    }
-
-    // Atualizar barras de velocidade de rede
-    updateNetworkSpeedBars(downloadSpeed, uploadSpeed) {
-        const downloadBar = document.querySelector('.speed-bar-fill.download');
-        const uploadBar = document.querySelector('.speed-bar-fill.upload');
-        
-        // Escala ultra sensível para velocidades muito baixas
-        const kb = 1024;
-        const mb = kb * 1024;
-        
-        // Função para calcular porcentagem com escala ultra amplificada
-        const calculatePercentage = (speed) => {
-            if (speed === 0) return 0;
-            
-            const speedKBps = speed / kb;
-            const speedMBps = speed / mb;
-            
-            // Para velocidades muito baixas (0-100 KB/s), usar escala ultra amplificada
-            if (speedKBps <= 100) {
-                return Math.min((speedKBps / 100) * 60, 60); // 0-100 KB/s = 0-60%
-            }
-            // Para velocidades baixas (100 KB/s - 1 MB/s), usar escala amplificada
-            else if (speedMBps <= 1) {
-                const kbRange = speedKBps - 100; // 0-900 KB
-                return Math.min(60 + (kbRange / 900) * 30, 90); // 100-1000 KB/s = 60-90%
-            }
-            // Para velocidades normais (1+ MB/s), usar escala normal
-            else {
-                return Math.min(90 + ((speedMBps - 1) / 4) * 10, 100); // 1-5 MB/s = 90-100%
-            }
-        };
-        
-        const downloadPercentage = calculatePercentage(downloadSpeed);
-        const uploadPercentage = calculatePercentage(uploadSpeed);
-        
-        if (downloadBar) {
-            downloadBar.style.transition = 'height 0.3s ease-in-out';
-            downloadBar.style.height = `${downloadPercentage}%`;
-        }
-        if (uploadBar) {
-            uploadBar.style.transition = 'height 0.3s ease-in-out';
-            uploadBar.style.height = `${uploadPercentage}%`;
-        }
-    }
 
     // Atualizar métricas dinâmicas do sistema
     updateSystemInfo() {
@@ -748,6 +1391,15 @@ class SMXLiveBoard {
                 loadCard.classList.remove('idle', 'low', 'normal', 'high', 'critical');
                 // Adicionar nova classe
                 loadCard.classList.add(statusClass);
+                
+                // Adicionar animações especiais baseadas no status
+                if (statusClass === 'critical') {
+                    loadCard.style.animation = 'criticalCardPulse 1s ease-in-out infinite';
+                } else if (statusClass === 'high') {
+                    loadCard.style.animation = 'highLoadPulse 2s ease-in-out infinite';
+                } else {
+                    loadCard.style.animation = 'none';
+                }
             }
             
             // Atualizar cor do ícone central baseado no status
@@ -784,6 +1436,8 @@ class SMXLiveBoard {
     // Atualizar indicadores visuais do Load Average
     updateLoadIndicators(loadAvg) {
         const dots = document.querySelectorAll('.load-dot');
+        const loadCircle = document.querySelector('.load-circle');
+        const loadCenterIcon = document.querySelector('.load-center-icon');
         
         // Ativar dots baseado no Load Average
         const activeDots = Math.min(Math.ceil(loadAvg), 3);
@@ -791,21 +1445,44 @@ class SMXLiveBoard {
         dots.forEach((dot, index) => {
             if (index < activeDots) {
                 dot.classList.add('active');
+                // Adicionar delay escalonado para animação em cascata
+                dot.style.animationDelay = `${index * 0.2}s`;
             } else {
                 dot.classList.remove('active');
+                dot.style.animationDelay = '0s';
             }
         });
+        
+        // Ativar animação do círculo baseado no load average
+        if (loadCircle) {
+            if (loadAvg > 2.0) {
+                loadCircle.style.animation = 'loadCirclePulse 1.5s ease-in-out infinite';
+            } else {
+                loadCircle.style.animation = 'none';
+            }
+        }
+        
+        // Ativar rotação do ícone central baseado no load average
+        if (loadCenterIcon) {
+            if (loadAvg > 1.5) {
+                loadCenterIcon.style.animation = 'loadIconRotate 3s linear infinite';
+            } else {
+                loadCenterIcon.style.animation = 'none';
+            }
+        }
     }
 
     // Atualizar gauge de frequência
     updateFrequencyGauge() {
-        const speed = this.systemData.cpu?.frequency;
-        console.log('⚡ Frequência no cliente:', speed, 'Tipo:', typeof speed);
-        console.log('🔧 Função updateFrequencyGauge chamada');
+        const speed = this.systemData?.cpu?.frequency;
         
         if (speed === undefined || speed === null || speed === 0) {
             // Frequência pode não estar disponível em alguns sistemas
-            console.log('❌ Frequência não disponível ou zero');
+            // Não retornar, continuar com valor padrão
+            const freqValue = document.getElementById('freqValue');
+            const freqStatus = document.getElementById('freqStatus');
+            if (freqValue) freqValue.textContent = 'N/A';
+            if (freqStatus) freqStatus.textContent = 'N/A';
             return;
         }
         const freqValue = document.getElementById('freqValue');
@@ -815,40 +1492,55 @@ class SMXLiveBoard {
         if (freqValue && freqStatus && freqBars) {
             freqValue.textContent = `${speed.toFixed(1)}GHz`;
             
-            // Atualizar barras de frequência baseado na velocidade
-            const baseFreq = 1.0;  // Frequência mínima
-            const maxFreq = 5.0;   // Frequência máxima
-            const percentage = Math.min(((speed - baseFreq) / (maxFreq - baseFreq)) * 100, 100);
+            // Atualizar barras de frequência baseado no uso da CPU (mais dinâmico)
+            const cpuUsage = this.systemData?.cpu?.usage || 0;
+            const percentage = Math.min(cpuUsage, 100);
             const activeBars = Math.min(Math.round((percentage / 100) * freqBars.length), freqBars.length);
             
-            console.log('🔧 Debug Frequência:', {
-                speed: speed,
-                percentage: percentage,
-                activeBars: activeBars,
-                totalBars: freqBars.length
-            });
+            // Debug removido para reduzir logs
             
             freqBars.forEach((bar, index) => {
                 if (index < activeBars) {
                     bar.classList.add('active');
                     // Adicionar delay escalonado para animação em cascata
-                    bar.style.animationDelay = `${index * 0.1}s`;
+                    bar.style.animationDelay = `${index * 0.15}s`;
+                    // Adicionar animação de pulso mais intensa para barras ativas
+                    bar.style.animation = 'freqBarPulse 1.5s ease-in-out infinite';
                 } else {
                     bar.classList.remove('active');
                     bar.style.animationDelay = '0s';
+                    bar.style.animation = 'none';
                 }
             });
             
-            // Status baseado na frequência
-            if (speed > 4.0) {
+            // Status baseado no uso da CPU (mais dinâmico)
+            const freqCard = document.querySelector('.freq-card');
+            
+            if (cpuUsage > 80) {
                 freqStatus.textContent = 'TURBO';
-            } else if (speed > 3.0) {
+                // Ativar animação especial para modo TURBO
+                if (freqCard) {
+                    freqCard.classList.add('turbo-mode');
+                    // Adicionar animação de brilho para todas as barras ativas
+                    freqBars.forEach((bar, index) => {
+                        if (index < activeBars) {
+                            bar.style.animation = 'freqBarPulse 0.8s ease-in-out infinite, freqTurboGlow 2s ease-in-out infinite';
+                        }
+                    });
+                }
+            } else if (cpuUsage > 50) {
                 freqStatus.textContent = 'ALTO';
+                if (freqCard) {
+                    freqCard.classList.remove('turbo-mode');
+                }
             } else {
                 freqStatus.textContent = 'ECO';
+                if (freqCard) {
+                    freqCard.classList.remove('turbo-mode');
+                }
             }
             
-            console.log('✅ Frequência atualizada:', speed + 'GHz');
+            // Log de sucesso removido
         }
     }
 
@@ -858,13 +1550,10 @@ class SMXLiveBoard {
         const serverLatency = this.systemData?.osInfo?.networkLatency;
         const latency = serverLatency !== undefined ? serverLatency : this.dnsInfo.latency;
         
-        console.log('🌐 Latência no cliente:', latency, 'Tipo:', typeof latency);
-        console.log('   Server latency:', serverLatency);
-        console.log('   DNS latency:', this.dnsInfo.latency);
+        // Logs de debug removidos
         
         if (latency === undefined || latency === null) {
             // Latência pode não estar disponível
-            console.log('❌ Latência não disponível');
             return;
         }
         const latencyValue = document.getElementById('latencyValue');
@@ -872,12 +1561,7 @@ class SMXLiveBoard {
         const latencyFill = document.querySelector('.latency-fill');
         const latencyCard = document.querySelector('.latency-card');
         
-        console.log('🔍 Elementos de latência encontrados:', {
-            latencyValue: !!latencyValue,
-            latencyStatus: !!latencyStatus,
-            latencyFill: !!latencyFill,
-            latencyCard: !!latencyCard
-        });
+        // Debug dos elementos removido
         
         if (latencyValue && latencyStatus && latencyFill) {
             // Formatar latência com valor arredondado e formatação inteligente
@@ -925,9 +1609,7 @@ class SMXLiveBoard {
                 latencyCard.classList.add(statusClass);
             }
             
-            console.log('✅ Latência atualizada:', latency + 'ms', 'Formatted:', formattedLatency, 'Percentage:', percentage, 'Status:', statusText);
-        } else {
-            console.log('❌ Elementos de latência não encontrados!');
+            // Log de sucesso removido
         }
         
         // Atualizar detalhes de ping e jitter
@@ -956,12 +1638,15 @@ class SMXLiveBoard {
 
     // Atualizar display de uptime
     updateUptimeDisplay() {
-        const uptimeSeconds = this.systemData.time?.uptime;
-        console.log('⏱️ Uptime no cliente:', uptimeSeconds, 'Tipo:', typeof uptimeSeconds);
+        const uptimeSeconds = this.systemData?.time?.uptime;
         
         if (uptimeSeconds === undefined || uptimeSeconds === null) {
             // Não logar warning desnecessário - uptime pode não estar disponível
-            console.log('❌ Uptime não disponível');
+            // Mostrar N/A em vez de retornar
+            const uptimeValue = document.getElementById('uptimeValue');
+            const uptimeStatus = document.getElementById('uptimeStatus');
+            if (uptimeValue) uptimeValue.textContent = 'N/A';
+            if (uptimeStatus) uptimeStatus.textContent = 'N/A';
             return;
         }
         const uptimeValue = document.getElementById('uptimeValue');
@@ -995,7 +1680,7 @@ class SMXLiveBoard {
                 uptimeStatus.textContent = 'RECENTE';
             }
             
-            console.log('✅ Uptime atualizado:', this.formatUptime(uptimeSeconds));
+            // Log de sucesso removido
         }
     }
 
@@ -1012,46 +1697,65 @@ class SMXLiveBoard {
         const currentDir = document.getElementById('currentDir');
 
         if (osInfo) {
-            osInfo.textContent = `${this.systemData.osInfo?.distro || 'Windows 11'} ${this.systemData.osInfo?.release || '10.0.22631'}`;
+            osInfo.textContent = `${this.systemData.osInfo?.distro} ${this.systemData.osInfo?.release}`;
         }
         if (archInfo) {
-            archInfo.textContent = 'x64';
+            archInfo.textContent = this.systemData.osInfo?.arch;
         }
         if (nodeVersion) {
-            nodeVersion.textContent = 'v18.17.0';
+            nodeVersion.textContent = this.systemData.osInfo?.nodeVersion;
         }
         if (systemUptime) {
-            systemUptime.textContent = this.formatUptime(this.systemData.time?.uptime || 86400);
+            systemUptime.textContent = this.formatUptime(this.systemData.time?.uptime);
         }
         if (currentUser) {
-            currentUser.textContent = 'usuario';
+            currentUser.textContent = this.systemData.osInfo?.currentUser;
         }
         if (currentDir) {
-            currentDir.textContent = 'C:\\SMX\\SMX-LiveBoard';
+            currentDir.textContent = this.systemData.osInfo?.currentDir;
         }
+
+        // Atualizar footer
+        this.updateFooter();
+    }
+
+    // Atualizar informações do footer (informações estáticas)
+    updateFooter() {
+        // Informações estáticas - não precisam de atualização dinâmica
+        // MIT License e Windows Environment são fixos
     }
 
     // Adicionar status visual aos cards
     addStatusToCard(element, status) {
-        if (!element) return;
-        
-        const card = element.closest('.system-info-item');
-        if (card) {
-            // Remover status anteriores
-            card.classList.remove('status-online', 'status-warning', 'status-critical');
-            // Adicionar novo status
-            card.classList.add(`status-${status}`);
+        try {
+            if (!element || !status) return;
+            
+            const card = element.closest('.system-info-item');
+            if (card) {
+                // Remover status anteriores
+                card.classList.remove('status-online', 'status-warning', 'status-critical');
+                // Adicionar novo status
+                card.classList.add(`status-${status}`);
+            }
+        } catch (error) {
         }
     }
 
     // Atualizar tabela de processos
     updateProcesses() {
-        if (!this.systemData?.processes) return;
-
         const tbody = document.getElementById('processesTableBody');
         if (!tbody) return;
 
-        const processes = this.systemData.processes.slice(0, 5);
+        // Se não há dados de processos, mostrar loading
+        if (!this.systemData?.processes) {
+            this.showProcessesLoading();
+            return;
+        }
+
+        // Verificar se processes tem a nova estrutura
+        const processesData = this.systemData.processes;
+        const processes = processesData?.list || [];
+        const totals = processesData?.totals || { cpu: 0, memory: 0, count: 0 };
         
         if (processes.length === 0) {
             tbody.innerHTML = `
@@ -1066,7 +1770,7 @@ class SMXLiveBoard {
 
         tbody.innerHTML = processes.map(process => {
             const cpuUsage = process.cpu?.toFixed(1) || 0;
-            const memoryUsage = Math.round(process.memory || 0);
+            const memoryMB = process.memory?.toFixed(2) || 0;
             
             return `
                 <tr class="process-row" data-name="${process.name}" data-pid="${process.pid}" data-cpu="${process.cpu}" data-memory="${process.memory}">
@@ -1082,9 +1786,9 @@ class SMXLiveBoard {
                     </td>
                     <td class="process-memory">
                         <div class="metric-with-bar">
-                            <span class="metric-value">${memoryUsage} MB</span>
+                            <span class="metric-value">${memoryMB} MB</span>
                             <div class="metric-bar">
-                                <div class="metric-bar-fill memory-bar" style="width: ${Math.min(memoryUsage / 10, 100)}%"></div>
+                                <div class="metric-bar-fill memory-bar" style="width: ${Math.min(memoryMB * 10, 100)}%"></div>
                             </div>
                         </div>
                     </td>
@@ -1092,14 +1796,15 @@ class SMXLiveBoard {
             `;
         }).join('');
 
-        // Atualizar totais
-        this.updateProcessTotals(processes);
+        // Atualizar totais usando dados do backend
+        this.updateProcessTotals(totals);
     }
 
     // Atualizar totais dos processos
-    updateProcessTotals(processes) {
-        const totalCpu = processes.reduce((sum, process) => sum + (process.cpu || 0), 0);
-        const totalMemory = processes.reduce((sum, process) => sum + (process.memory || 0), 0);
+    updateProcessTotals(totals) {
+        const totalCpu = totals.cpu || 0;
+        const totalMemoryMB = totals.memory || 0;
+        const totalProcesses = totals.count || 0;
 
         const totalCpuElement = document.getElementById('totalCpu');
         const totalMemoryElement = document.getElementById('totalMemory');
@@ -1108,8 +1813,9 @@ class SMXLiveBoard {
             totalCpuElement.textContent = `${totalCpu.toFixed(1)}%`;
         }
         if (totalMemoryElement) {
-            totalMemoryElement.textContent = `${Math.round(totalMemory)} MB`;
+            totalMemoryElement.textContent = `${totalMemoryMB.toFixed(2)} MB`;
         }
+
     }
 
     // Configurar controles da tabela de processos
@@ -1196,66 +1902,7 @@ class SMXLiveBoard {
     }
 
 
-    // Atualizar sparklines
-    updateSparklines() {
-        if (!this.systemData) return;
-
-        // Adicionar dados ao histórico
-        this.history.cpu.push(this.systemData.cpu?.usage || 0);
-        this.history.ram.push(this.systemData.memory?.usage || 0);
-        this.history.disk.push(this.systemData.disk?.usage || 0);
-        // Removido: dados simulados de rede
-
-        // Manter apenas últimos 20 pontos
-        const maxPoints = 20;
-        Object.keys(this.history).forEach(key => {
-            if (this.history[key].length > maxPoints) {
-                this.history[key] = this.history[key].slice(-maxPoints);
-            }
-        });
-
-        // Desenhar sparklines
-        this.drawSparkline('cpuTrend', this.history.cpu, '#00d4ff');
-        this.drawSparkline('ramTrend', this.history.ram, '#00ff88');
-        this.drawSparkline('diskTrend', this.history.disk, '#ff8800');
-        this.drawSparkline('networkTrend', this.history.network, '#ff4444');
-    }
-
-    // Desenhar sparkline
-    drawSparkline(canvasId, data, color) {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas || data.length < 2) return;
-
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-
-        // Limpar canvas
-        ctx.clearRect(0, 0, width, height);
-
-        // Configurar estilo
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-
-        // Calcular pontos
-        const max = Math.max(...data);
-        const min = Math.min(...data);
-        const range = max - min || 1;
-
-        data.forEach((value, index) => {
-            const x = (index / (data.length - 1)) * width;
-            const y = height - ((value - min) / range) * height;
-
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        });
-
-        ctx.stroke();
-    }
+    // Sparklines removidos
 
     // Verificar alertas
     checkAlerts() {
@@ -1273,6 +1920,9 @@ class SMXLiveBoard {
         // CPU
         const cpuCard = document.querySelector('.cpu-gauge');
         if (cpuCard) {
+            // Remover classes anteriores
+            cpuCard.classList.remove('critical', 'warning');
+            
             if (cpuUsage > 90) {
                 cpuCard.classList.add('critical');
             } else if (cpuUsage > 80) {
@@ -1367,43 +2017,31 @@ class SMXLiveBoard {
         const startTime = performance.now();
         
         try {
-            // Usar uma abordagem mais simples - ping via imagem com timeout mais curto
-            const img = new Image();
-            let timeoutId;
+            // Usar fetch com timeout muito curto para evitar latências altas
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1000); // Timeout de apenas 1 segundo
             
-            img.onload = () => {
-                clearTimeout(timeoutId);
-                const endTime = performance.now();
-                const latency = Math.round(endTime - startTime);
-                this.dnsInfo.latency = latency;
-                this.updateLatencyGauge();
-            };
+            // Usar um endpoint mais confiável para teste de latência
+            const response = await fetch(`http://${this.dnsInfo.server}`, {
+                method: 'HEAD',
+                signal: controller.signal,
+                mode: 'no-cors' // Evitar problemas de CORS
+            });
             
-            img.onerror = () => {
-                clearTimeout(timeoutId);
-                // Se falhar, usar latência simulada baseada no tempo
-                const endTime = performance.now();
-                const latency = Math.round(endTime - startTime);
-                this.dnsInfo.latency = latency;
-                this.updateLatencyGauge();
-            };
+            clearTimeout(timeoutId);
+            const endTime = performance.now();
+            const latency = Math.round(endTime - startTime);
             
-            // Timeout mais curto para evitar erros longos
-            timeoutId = setTimeout(() => {
-                if (!this.dnsInfo.latency) {
-                    const endTime = performance.now();
-                    const latency = Math.round(endTime - startTime);
-                    this.dnsInfo.latency = latency;
-                    this.updateLatencyGauge();
-                }
-            }, 2000); // Reduzido de 5s para 2s
-            
-            // Tentar carregar uma imagem pequena do servidor DNS
-            img.src = `http://${this.dnsInfo.server}/favicon.ico?t=${Date.now()}`;
+            // Limitar latência máxima para evitar valores anômalos
+            this.dnsInfo.latency = Math.min(latency, 1000); // Máximo 1 segundo
+            this.updateLatencyGauge();
             
         } catch (error) {
-            // Não logar erro de DNS - é comum falhar
-            this.dnsInfo.latency = null;
+            // Se falhar, usar latência simulada baixa
+            const endTime = performance.now();
+            const latency = Math.round(endTime - startTime);
+            this.dnsInfo.latency = Math.min(latency, 100); // Máximo 100ms em caso de erro
+            this.updateLatencyGauge();
         }
     }
 
@@ -1419,11 +2057,7 @@ class SMXLiveBoard {
             alertBtn.addEventListener('click', () => this.handleTelegramAlert());
         }
 
-        // Botão SSH
-        const sshBtn = document.getElementById('sshBtn');
-        if (sshBtn) {
-            sshBtn.addEventListener('click', () => this.handleSSHConnection());
-        }
+        // Botão SSH removido
 
         // Botão Logs
         const logsBtn = document.getElementById('logsBtn');
@@ -1450,52 +2084,23 @@ class SMXLiveBoard {
                 return;
             }
 
-            // Enviar alerta com dados atuais do sistema
-            const alertData = {
-                alertType: 'SYSTEM_STATUS',
-                data: {
-                    cpu: this.systemData?.cpu?.usage || 0,
-                    memory: this.systemData?.memory?.usage || 0,
-                    disk: this.systemData?.disk?.usage || 0,
-                    hostname: this.systemData?.osInfo?.hostname || 'N/A',
-                    os: `${this.systemData?.osInfo?.platform || 'N/A'} ${this.systemData?.osInfo?.release || ''}`
-                },
-                severity: 'INFO'
-            };
-
-            const response = await fetch('/api/telegram/alert', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(alertData)
-            });
-
-            if (response.ok) {
-                this.showNotification('✅ Alerta enviado para o Telegram!', 'success');
-            } else {
-                throw new Error('Erro ao enviar alerta');
-            }
+            // Mostrar modal de seleção de alertas
+            this.showTelegramAlertModal();
         } catch (error) {
-            console.error('Erro ao enviar alerta Telegram:', error);
-            this.showNotification('❌ Erro ao enviar alerta: ' + error.message, 'error');
+            console.error('❌ Erro ao verificar status do Telegram:', error);
+            this.showNotification('❌ Erro ao conectar com Telegram', 'error');
         }
     }
 
-    // Handler para botão SSH
-    async handleSSHConnection() {
-        this.showSSHConnectionModal();
-    }
+    // Handler SSH removido
 
     // Handler para botão Logs
     async handleViewLogs() {
         try {
-            const response = await fetch('/api/logs?limit=50');
-            const logs = await response.json();
-            this.showLogsModal(logs);
+            // Abrir modal de logs diretamente (frontend apenas)
+            this.showLogsModal();
         } catch (error) {
-            console.error('Erro ao obter logs:', error);
-            this.showNotification('❌ Erro ao carregar logs: ' + error.message, 'error');
+            this.showNotification('❌ Erro ao abrir logs: ' + error.message, 'error');
         }
     }
 
@@ -1505,6 +2110,104 @@ class SMXLiveBoard {
     }
 
     // ===== MODAIS =====
+
+    // Toast de confirmação discreto
+    showConfirmationModal(alertType) {
+        return new Promise((resolve) => {
+            const alertNames = {
+                'system_status': 'Status do Sistema',
+                'cpu_alert': 'Alerta de CPU',
+                'memory_alert': 'Alerta de Memória',
+                'disk_alert': 'Alerta de Disco',
+                'processes_alert': 'Top Processos',
+                'custom_message': 'Mensagem Personalizada'
+            };
+
+            // Criar toast de confirmação
+            const toast = document.createElement('div');
+            toast.className = 'confirmation-toast';
+            toast.innerHTML = `
+                <div class="confirmation-content">
+                    <span class="confirmation-text">Enviar ${alertNames[alertType]}?</span>
+                    <div class="confirmation-buttons">
+                        <button class="confirmation-btn cancel-btn" onclick="this.closest('.confirmation-toast').remove(); window.confirmResult = false;">✕</button>
+                        <button class="confirmation-btn confirm-btn" onclick="this.closest('.confirmation-toast').remove(); window.confirmResult = true;">✓</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto-remove após 5 segundos se não houver interação
+            const autoRemove = setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                    resolve(false);
+                }
+            }, 5000);
+            
+            // Aguardar resultado
+            const checkResult = () => {
+                if (window.confirmResult !== undefined) {
+                    clearTimeout(autoRemove);
+                    resolve(window.confirmResult);
+                    delete window.confirmResult;
+                } else {
+                    setTimeout(checkResult, 100);
+                }
+            };
+            checkResult();
+        });
+    }
+
+    // Modal de seleção de alertas do Telegram
+    showTelegramAlertModal() {
+        const modal = this.createModal('Alerta Telegram', `
+            <div class="modal-content compact-modal">
+                <div class="alert-grid">
+                    <div class="alert-item" onclick="app.sendTelegramAlert('system_status')">
+                        <div class="alert-icon system"></div>
+                        <span>Sistema</span>
+                        <small>Status completo</small>
+                    </div>
+                    
+                    <div class="alert-item" onclick="app.sendTelegramAlert('cpu_alert')">
+                        <div class="alert-icon cpu"></div>
+                        <span>CPU</span>
+                        <small>Uso processador</small>
+                    </div>
+                    
+                    <div class="alert-item" onclick="app.sendTelegramAlert('memory_alert')">
+                        <div class="alert-icon memory"></div>
+                        <span>Memória</span>
+                        <small>Uso RAM</small>
+                    </div>
+                    
+                    <div class="alert-item" onclick="app.sendTelegramAlert('disk_alert')">
+                        <div class="alert-icon disk"></div>
+                        <span>Disco</span>
+                        <small>Espaço usado</small>
+                    </div>
+                    
+                    <div class="alert-item" onclick="app.sendTelegramAlert('processes_alert')">
+                        <div class="alert-icon processes"></div>
+                        <span>Processos</span>
+                        <small>Top 5 ativos</small>
+                    </div>
+                    
+                    <div class="alert-item" onclick="app.sendTelegramAlert('custom_message')">
+                        <div class="alert-icon custom"></div>
+                        <span>Personalizada</span>
+                        <small>Mensagem livre</small>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button onclick="this.closest('.modal-overlay').remove()" class="btn-secondary">Cancelar</button>
+                </div>
+            </div>
+        `);
+        document.body.appendChild(modal);
+    }
 
     // Modal de configuração do Telegram
     showTelegramConfigModal() {
@@ -1528,83 +2231,257 @@ class SMXLiveBoard {
         document.body.appendChild(modal);
     }
 
-    // Modal de conexão SSH
-    showSSHConnectionModal() {
-        const modal = this.createModal('Conexão SSH', `
-            <div class="modal-content">
-                <p>Conectar a um servidor via SSH:</p>
-                <div class="form-group">
-                    <label>Host:</label>
-                    <input type="text" id="sshHost" placeholder="192.168.1.100">
-                </div>
-                <div class="form-group">
-                    <label>Porta:</label>
-                    <input type="number" id="sshPort" value="22">
-                </div>
-                <div class="form-group">
-                    <label>Usuário:</label>
-                    <input type="text" id="sshUsername" placeholder="root">
-                </div>
-                <div class="form-group">
-                    <label>Senha:</label>
-                    <input type="password" id="sshPassword" placeholder="••••••••">
-                </div>
-                <div class="modal-actions">
-                    <button onclick="this.close()" class="btn-secondary">Cancelar</button>
-                    <button onclick="app.connectSSH()" class="btn-primary">Conectar</button>
-                </div>
-            </div>
-        `);
-        document.body.appendChild(modal);
-    }
+    // Modal SSH removido
 
     // Modal de logs
-    showLogsModal(logs) {
-        const logsHtml = logs.logs.map(log => `
-            <div class="log-entry log-${log.level.toLowerCase()}">
-                <span class="log-time">${new Date(log.timestamp).toLocaleString('pt-BR')}</span>
-                <span class="log-level">[${log.level}]</span>
-                <span class="log-source">[${log.source}]</span>
-                <span class="log-message">${log.message}</span>
+    showLogsModal() {
+        console.log('📋 Abrindo modal de logs...');
+        
+        // Criar estrutura HTML específica para logs
+        const modalHTML = `
+            <div class="logs-modal-overlay" id="logsModalOverlay">
+                <div class="logs-modal-window" id="logsModal">
+                    <div class="logs-modal-header">
+                        <h3>📋 Logs do Sistema</h3>
+                        <button class="logs-modal-close" onclick="this.closest('.logs-modal-overlay').remove()">×</button>
+                    </div>
+                    <div class="logs-modal-content">
+                        <div class="logs-controls">
+                            <div class="logs-filters">
+                                <select id="logLevelFilter" class="log-filter">
+                                    <option value="all">Todos os Níveis</option>
+                                    <option value="info">Info</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="error">Error</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                                
+                                <select id="logSourceFilter" class="log-filter">
+                                    <option value="all">Todas as Fontes</option>
+                                </select>
+                                
+                                <input type="text" id="logSearchInput" class="log-filter" placeholder="Buscar nos logs...">
+                                
+                                <input type="date" id="logDateFrom" class="log-filter" title="Data inicial">
+                                <input type="date" id="logDateTo" class="log-filter" title="Data final">
+                            </div>
+                            
+                            <div class="logs-actions">
+                                <button id="clearLogFilters" class="btn-secondary">Limpar Filtros</button>
+                                <button id="refreshLogs" class="btn-primary">🔄 Atualizar</button>
+                                <button id="toggleRealTime" class="btn-primary">▶️ Tempo Real</button>
+                                <button id="exportLogs" class="btn-success">📤 Exportar</button>
+                                <button id="clearLogs" class="btn-danger">🗑️ Limpar</button>
+                            </div>
+                        </div>
+                        
+                        <div class="logs-stats" id="logsStats">
+                            <span id="logsCount">Carregando...</span>
+                        </div>
+                        
+                        <div class="logs-container" id="logsContainer">
+                            <div class="loading-logs">Carregando logs...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        `).join('');
+        `;
+        
+        // Adicionar ao DOM
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Inicializar sistema de logs
+        this.initLogsModal();
+    }
 
-        const modal = this.createModal('Logs do Sistema', `
-            <div class="modal-content logs-modal">
-                <div class="logs-container">
-                    ${logsHtml}
-                </div>
-                <div class="modal-actions">
-                    <button onclick="this.close()" class="btn-primary">Fechar</button>
-                </div>
-            </div>
-        `);
-        document.body.appendChild(modal);
+    // Inicializar modal de logs
+    async initLogsModal() {
+        try {
+            // Inicializar sistema de logs
+            await window.smxLogs.init();
+            
+            // Popular filtro de fontes
+            this.populateSourceFilter();
+            
+            // Atualizar estatísticas
+            this.updateLogsStats();
+            
+            console.log('✅ Modal de logs inicializado');
+        } catch (error) {
+            console.error('❌ Erro ao inicializar modal de logs:', error);
+        }
+    }
+
+    // Popular filtro de fontes
+    populateSourceFilter() {
+        const sourceFilter = document.getElementById('logSourceFilter');
+        if (!sourceFilter) return;
+
+        const sources = window.smxLogs.getUniqueSources();
+        const currentValue = sourceFilter.value;
+        
+        // Limpar opções existentes (exceto "Todas as Fontes")
+        sourceFilter.innerHTML = '<option value="all">Todas as Fontes</option>';
+        
+        // Adicionar fontes únicas
+        sources.forEach(source => {
+            const option = document.createElement('option');
+            option.value = source;
+            option.textContent = source;
+            sourceFilter.appendChild(option);
+        });
+        
+        // Restaurar valor selecionado se ainda existir
+        if (sources.includes(currentValue)) {
+            sourceFilter.value = currentValue;
+        }
+    }
+
+    // Atualizar estatísticas dos logs
+    async updateLogsStats() {
+        const statsElement = document.getElementById('logsCount');
+        if (!statsElement) return;
+
+        try {
+            const stats = await window.smxLogs.getLogStats();
+            if (stats) {
+                statsElement.innerHTML = `
+                    Total: ${stats.total} | 
+                    Info: ${stats.byLevel.INFO || 0} | 
+                    Warning: ${stats.byLevel.WARNING || 0} | 
+                    Error: ${stats.byLevel.ERROR || 0} | 
+                    Critical: ${stats.byLevel.CRITICAL || 0}
+                `;
+            } else {
+                // Fallback: mostrar contagem básica
+                const total = window.smxLogs.logs.length;
+                const filtered = window.smxLogs.filteredLogs.length;
+                statsElement.textContent = `Mostrando ${filtered} de ${total} logs`;
+            }
+        } catch (error) {
+            console.error('❌ Erro ao atualizar estatísticas:', error);
+            // Fallback em caso de erro
+            const total = window.smxLogs.logs.length;
+            const filtered = window.smxLogs.filteredLogs.length;
+            statsElement.textContent = `Mostrando ${filtered} de ${total} logs`;
+        }
     }
 
     // Modal de terminal
     showTerminalModal() {
-        const modal = this.createModal('Terminal', `
-            <div class="modal-content terminal-modal">
-                <div class="terminal-container">
-                    <div class="terminal-output" id="terminalOutput"></div>
-                    <div class="terminal-input">
-                        <input type="text" id="terminalCommand" placeholder="Digite um comando...">
-                        <button onclick="app.executeTerminalCommand()">Executar</button>
+        console.log('Abrindo modal do terminal...');
+        
+        // Criar estrutura HTML específica para o terminal
+        const modalHTML = `
+            <div class="terminal-modal-overlay" id="terminalModalOverlay">
+                <div class="terminal-modal-window" id="terminalModal">
+                    <div class="terminal-modal-header">
+                        <h3>Terminal SMX</h3>
+                        <button class="terminal-modal-close" onclick="this.closest('.terminal-modal-overlay').remove()">×</button>
                     </div>
-                </div>
-                <div class="modal-actions">
-                    <button onclick="this.close()" class="btn-secondary">Fechar</button>
-                    <button onclick="app.clearTerminal()" class="btn-warning">Limpar</button>
+                    <div class="terminal-modal-content">
+                        <div class="terminal-container">
+                            <div class="terminal-header">
+                                <div class="terminal-status" id="terminalStatus">Desconectado</div>
+                                <div class="terminal-controls">
+                                    <button id="terminalConnectBtn" onclick="app.connectTerminal()" class="btn-primary">Conectar</button>
+                                    <button id="terminalDisconnectBtn" onclick="app.disconnectTerminal()" class="btn-secondary" style="display: none;">Desconectar</button>
+                                </div>
+                            </div>
+                            <div class="terminal-output" id="terminalOutput">
+                                <div class="terminal-output-text">Terminal SMX. Clique em "Conectar" para começar.</div>
+                            </div>
+                            <div class="terminal-input-container">
+                                <div class="terminal-prompt" id="terminalPrompt">></div>
+                                <div class="terminal-input-wrapper">
+                                    <input type="text" id="terminalCommand" placeholder="Digite um comando..." autocomplete="off">
+                                    <div class="terminal-suggestions" id="terminalSuggestions"></div>
+                                </div>
+                            </div>
+                            <div class="terminal-help">
+                                <small>Dica: Use Tab para autocompletar, ↑↓ para histórico, Ctrl+C para cancelar</small>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button onclick="this.closest('.terminal-modal-overlay').remove()" class="btn-secondary">Fechar</button>
+                            <button onclick="app.clearTerminal()" class="btn-warning">Limpar</button>
+                        </div>
+                    </div>
+                    <div class="terminal-resize-handle" id="terminalResizeHandle"></div>
                 </div>
             </div>
-        `);
-        document.body.appendChild(modal);
+        `;
         
-        // Focar no input
-        setTimeout(() => {
-            document.getElementById('terminalCommand').focus();
-        }, 100);
+        // Adicionar ao DOM
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Inicializar redimensionamento
+        this.initTerminalResize();
+        console.log('Modal adicionado ao DOM');
+        
+        // Inicializar terminal
+        this.initializeTerminal();
+    }
+
+    // Inicializar redimensionamento do terminal
+    initTerminalResize() {
+        console.log('🔧 Inicializando redimensionamento do terminal...');
+        const modal = document.getElementById('terminalModal');
+        const resizeHandle = document.getElementById('terminalResizeHandle');
+        
+        console.log('Modal encontrado:', modal);
+        console.log('Resize handle encontrado:', resizeHandle);
+        
+        if (!modal || !resizeHandle) {
+            console.warn('❌ Elementos do terminal não encontrados para redimensionamento');
+            return;
+        }
+        
+        console.log('✅ Elementos encontrados, configurando redimensionamento...');
+
+        let isResizing = false;
+        let startX, startY, startWidth, startHeight;
+
+        resizeHandle.addEventListener('mousedown', (e) => {
+            console.log('🖱️ Mouse down no resize handle');
+            isResizing = true;
+            modal.classList.add('resizing');
+            
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = parseInt(window.getComputedStyle(modal).width, 10);
+            startHeight = parseInt(window.getComputedStyle(modal).height, 10);
+            
+            console.log('📏 Dimensões iniciais:', startWidth, 'x', startHeight);
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            const newWidth = startWidth + e.clientX - startX;
+            const newHeight = startHeight + e.clientY - startY;
+            
+            // Limites mínimos e máximos
+            const minWidth = 600;
+            const minHeight = 400;
+            const maxWidth = window.innerWidth * 0.9;
+            const maxHeight = window.innerHeight * 0.8;
+            
+            const finalWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+            const finalHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+            
+            console.log('📐 Redimensionando para:', finalWidth, 'x', finalHeight);
+            modal.style.width = finalWidth + 'px';
+            modal.style.height = finalHeight + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                modal.classList.remove('resizing');
+            }
+        });
     }
 
     // ===== FUNÇÕES AUXILIARES =====
@@ -1631,6 +2508,169 @@ class SMXLiveBoard {
         });
         
         return modal;
+    }
+
+    // Enviar alerta específico via Telegram
+    async sendTelegramAlert(alertType) {
+        try {
+            // Mostrar confirmação antes de enviar
+            const confirmed = await this.showConfirmationModal(alertType);
+            if (!confirmed) {
+                return;
+            }
+            
+            // Fechar modal de seleção
+            document.querySelector('.modal-overlay').remove();
+            
+            // Mostrar loading
+            this.showNotification('Enviando alerta...', 'info');
+            
+            // Buscar dados atuais do sistema
+            const currentSystemData = await this.fetchSystemData();
+            const systemData = currentSystemData || this.systemData;
+            
+            let alertData = {};
+            
+            switch (alertType) {
+                case 'system_status':
+                    alertData = {
+                        alertType: 'SYSTEM_STATUS',
+                        data: systemData, // Enviar dados completos do sistema
+                        severity: 'INFO'
+                    };
+                    break;
+                    
+                case 'cpu_alert':
+                    alertData = {
+                        alertType: 'CPU',
+                        data: {
+                            usage: systemData?.cpu?.usage || 0,
+                            cores: systemData?.cpu?.cores || 0,
+                            hostname: systemData?.osInfo?.hostname || 'N/A'
+                        },
+                        severity: systemData?.cpu?.usage > 80 ? 'WARNING' : 'INFO'
+                    };
+                    break;
+                    
+                case 'memory_alert':
+                    alertData = {
+                        alertType: 'MEMORY',
+                        data: {
+                            usage: systemData?.memory?.usage || 0,
+                            used: systemData?.memory?.used || '0 B',
+                            total: systemData?.memory?.total || '0 B',
+                            hostname: systemData?.osInfo?.hostname || 'N/A'
+                        },
+                        severity: systemData?.memory?.usage > 85 ? 'WARNING' : 'INFO'
+                    };
+                    break;
+                    
+                case 'disk_alert':
+                    alertData = {
+                        alertType: 'DISK',
+                        data: {
+                            usage: systemData?.disk?.usage || 0,
+                            used: systemData?.disk?.used || '0 B',
+                            total: systemData?.disk?.total || '0 B',
+                            hostname: systemData?.osInfo?.hostname || 'N/A'
+                        },
+                        severity: systemData?.disk?.usage > 90 ? 'WARNING' : 'INFO'
+                    };
+                    break;
+                    
+                case 'processes_alert':
+                    alertData = {
+                        alertType: 'PROCESSES',
+                        data: {
+                            processes: systemData?.processes?.slice(0, 5) || [],
+                            hostname: systemData?.osInfo?.hostname || 'N/A'
+                        },
+                        severity: 'INFO'
+                    };
+                    break;
+                    
+                case 'custom_message':
+                    this.showCustomMessageModal();
+                    return;
+                    
+                default:
+                    throw new Error('Tipo de alerta não reconhecido');
+            }
+
+            const response = await fetch('/api/telegram/alert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(alertData)
+            });
+
+            if (response.ok) {
+                this.showNotification('✅ Alerta enviado para o Telegram!', 'success');
+            } else {
+                throw new Error('Erro ao enviar alerta');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao enviar alerta:', error);
+            this.showNotification('❌ Erro ao enviar alerta: ' + error.message, 'error');
+        }
+    }
+
+    // Modal para mensagem personalizada
+    showCustomMessageModal() {
+        const modal = this.createModal('Mensagem Personalizada', `
+            <div class="modal-content compact-modal">
+                <div class="form-group">
+                    <textarea id="customMessage" rows="3" placeholder="Digite sua mensagem..." style="
+                        width: 100%;
+                        padding: 0.75rem;
+                        background: rgba(0, 0, 0, 0.3);
+                        border: 1px solid rgba(0, 212, 255, 0.3);
+                        border-radius: 4px;
+                        color: #ffffff;
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 0.9rem;
+                        resize: vertical;
+                        min-height: 80px;
+                    "></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button onclick="this.closest('.modal-overlay').remove()" class="btn-secondary">Cancelar</button>
+                    <button onclick="app.sendCustomMessage()" class="btn-primary">Enviar</button>
+                </div>
+            </div>
+        `);
+        document.body.appendChild(modal);
+    }
+
+    // Enviar mensagem personalizada
+    async sendCustomMessage() {
+        const message = document.getElementById('customMessage').value;
+        
+        if (!message.trim()) {
+            this.showNotification('❌ Digite uma mensagem', 'error');
+            return;
+        }
+
+        try {
+            // Mostrar loading
+            this.showNotification('Enviando mensagem...', 'info');
+            
+            const response = await fetch('/api/telegram/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+
+            if (response.ok) {
+                // Fechar modal
+                document.querySelector('.modal-overlay').remove();
+                this.showNotification('✅ Mensagem enviada para o Telegram!', 'success');
+            } else {
+                throw new Error('Erro ao enviar mensagem');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao enviar mensagem:', error);
+            this.showNotification('❌ Erro ao enviar mensagem: ' + error.message, 'error');
+        }
     }
 
     // Salvar configuração do Telegram
@@ -1663,83 +2703,247 @@ class SMXLiveBoard {
         }
     }
 
-    // Conectar SSH
-    async connectSSH() {
-        const host = document.getElementById('sshHost').value;
-        const port = document.getElementById('sshPort').value;
-        const username = document.getElementById('sshUsername').value;
-        const password = document.getElementById('sshPassword').value;
+    // Função SSH removida
 
-        if (!host || !username || !password) {
-            this.showNotification('❌ Preencha todos os campos obrigatórios', 'error');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/ssh/connect', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ host, port: parseInt(port), username, password })
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                this.showNotification('✅ Conectado via SSH!', 'success');
-                document.querySelector('.modal-overlay').remove();
-                // Aqui você pode abrir um modal para executar comandos SSH
-            } else {
-                throw new Error('Erro ao conectar');
-            }
-        } catch (error) {
-            this.showNotification('❌ Erro na conexão SSH: ' + error.message, 'error');
+    // ===== TERMINAL INTERATIVO =====
+    
+    initializeTerminal() {
+        this.terminalSessionId = null;
+        this.terminalHistory = [];
+        this.terminalHistoryIndex = -1;
+        this.terminalSuggestions = [];
+        this.terminalCurrentSuggestion = -1;
+        
+        const input = document.getElementById('terminalCommand');
+        if (input) {
+            input.addEventListener('keydown', (e) => this.handleTerminalKeydown(e));
+            input.addEventListener('input', (e) => this.handleTerminalInput(e));
         }
     }
 
-    // Executar comando no terminal
-    async executeTerminalCommand() {
-        const command = document.getElementById('terminalCommand').value;
-        const output = document.getElementById('terminalOutput');
-
-        if (!command.trim()) return;
-
-        // Adicionar comando ao output
-        output.innerHTML += `<div class="terminal-command">$ ${command}</div>`;
-
+    async connectTerminal() {
         try {
-            const response = await fetch('/api/terminal/execute', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ command })
-            });
-
-            const result = await response.json();
-            
-            if (result.stdout) {
-                output.innerHTML += `<div class="terminal-output">${result.stdout}</div>`;
-            }
-            if (result.stderr) {
-                output.innerHTML += `<div class="terminal-error">${result.stderr}</div>`;
-            }
-            if (result.exitCode !== 0) {
-                output.innerHTML += `<div class="terminal-error">Exit code: ${result.exitCode}</div>`;
-            }
-
+            this.socket.emit('terminal:create');
+            this.updateTerminalStatus('Conectando...', 'connecting');
         } catch (error) {
-            output.innerHTML += `<div class="terminal-error">Erro: ${error.message}</div>`;
+            this.updateTerminalStatus('Erro ao conectar', 'error');
+            console.error('Erro ao conectar terminal:', error);
+        }
+    }
+
+    async disconnectTerminal() {
+        if (this.terminalSessionId) {
+            this.socket.emit('terminal:close', { sessionId: this.terminalSessionId });
+            this.terminalSessionId = null;
+        }
+        this.updateTerminalStatus('Desconectado', 'disconnected');
+    }
+
+    updateTerminalStatus(status, type) {
+        const statusEl = document.getElementById('terminalStatus');
+        const connectBtn = document.getElementById('terminalConnectBtn');
+        const disconnectBtn = document.getElementById('terminalDisconnectBtn');
+        
+        if (statusEl) statusEl.textContent = status;
+        
+        if (type === 'connected') {
+            if (connectBtn) connectBtn.style.display = 'none';
+            if (disconnectBtn) disconnectBtn.style.display = 'inline-block';
+        } else {
+            if (connectBtn) connectBtn.style.display = 'inline-block';
+            if (disconnectBtn) disconnectBtn.style.display = 'none';
+        }
+    }
+
+    handleTerminalKeydown(e) {
+        const input = e.target;
+        const suggestions = document.getElementById('terminalSuggestions');
+        
+        switch (e.key) {
+            case 'Enter':
+                e.preventDefault();
+                this.executeTerminalCommand();
+                break;
+                
+            case 'Tab':
+                e.preventDefault();
+                this.handleTerminalTab();
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                this.navigateHistory(-1);
+                break;
+                
+            case 'ArrowDown':
+                e.preventDefault();
+                this.navigateHistory(1);
+                break;
+                
+            case 'Escape':
+                this.hideSuggestions();
+                break;
+                
+            case 'ArrowLeft':
+            case 'ArrowRight':
+                this.hideSuggestions();
+                break;
+        }
+    }
+
+    handleTerminalInput(e) {
+        const input = e.target;
+        const value = input.value;
+        
+        // Limpar sugestões se input estiver vazio
+        if (!value.trim()) {
+            this.hideSuggestions();
+            return;
+        }
+        
+        // Debounce para autocompletar
+        clearTimeout(this.terminalAutocompleteTimeout);
+        this.terminalAutocompleteTimeout = setTimeout(() => {
+            this.requestAutocomplete(value);
+        }, 300);
+    }
+
+    async requestAutocomplete(partialCommand) {
+        try {
+            this.socket.emit('terminal:autocomplete', { 
+                partialCommand, 
+                type: 'command' 
+            });
+        } catch (error) {
+            console.error('Erro ao solicitar autocompletar:', error);
+        }
+    }
+
+    handleTerminalTab() {
+        if (this.terminalSuggestions.length > 0) {
+            const input = document.getElementById('terminalCommand');
+            const currentValue = input.value;
+            const words = currentValue.split(' ');
+            const lastWord = words[words.length - 1];
+            
+            if (this.terminalCurrentSuggestion >= 0 && this.terminalCurrentSuggestion < this.terminalSuggestions.length) {
+                const suggestion = this.terminalSuggestions[this.terminalCurrentSuggestion];
+                words[words.length - 1] = suggestion;
+                input.value = words.join(' ');
+                this.hideSuggestions();
+            }
+        }
+    }
+
+    navigateHistory(direction) {
+        if (this.terminalHistory.length === 0) return;
+        
+        this.terminalHistoryIndex += direction;
+        
+        if (this.terminalHistoryIndex < 0) {
+            this.terminalHistoryIndex = 0;
+        } else if (this.terminalHistoryIndex >= this.terminalHistory.length) {
+            this.terminalHistoryIndex = this.terminalHistory.length - 1;
+        }
+        
+        const input = document.getElementById('terminalCommand');
+        if (input && this.terminalHistoryIndex >= 0) {
+            input.value = this.terminalHistory[this.terminalHistoryIndex];
+        }
+    }
+
+    showSuggestions(suggestions) {
+        const suggestionsEl = document.getElementById('terminalSuggestions');
+        if (!suggestionsEl || suggestions.length === 0) return;
+        
+        this.terminalSuggestions = suggestions;
+        this.terminalCurrentSuggestion = 0;
+        
+        suggestionsEl.innerHTML = suggestions.map((suggestion, index) => 
+            `<div class="suggestion-item ${index === 0 ? 'active' : ''}" data-index="${index}">${suggestion}</div>`
+        ).join('');
+        
+        suggestionsEl.style.display = 'block';
+    }
+
+    hideSuggestions() {
+        const suggestionsEl = document.getElementById('terminalSuggestions');
+        if (suggestionsEl) {
+            suggestionsEl.style.display = 'none';
+            suggestionsEl.innerHTML = '';
+        }
+        this.terminalSuggestions = [];
+        this.terminalCurrentSuggestion = -1;
+    }
+
+    async executeTerminalCommand() {
+        const input = document.getElementById('terminalCommand');
+        const output = document.getElementById('terminalOutput');
+        const command = input.value.trim();
+
+        if (!command) return;
+
+        // Adicionar ao histórico
+        this.terminalHistory.push(command);
+        this.terminalHistoryIndex = this.terminalHistory.length;
+        
+        // Limitar histórico
+        if (this.terminalHistory.length > 50) {
+            this.terminalHistory.shift();
+            this.terminalHistoryIndex--;
         }
 
-        // Limpar input e rolar para baixo
-        document.getElementById('terminalCommand').value = '';
+        // Mostrar comando no output
+        output.innerHTML += `<div class="terminal-command-line">
+            <span class="terminal-prompt">></span>
+            <span class="terminal-command">${command}</span>
+        </div>`;
+
+        // Limpar input e sugestões
+        input.value = '';
+        this.hideSuggestions();
+
+        if (this.terminalSessionId) {
+            // Terminal interativo
+            this.socket.emit('terminal:command', { 
+                command, 
+                sessionId: this.terminalSessionId 
+            });
+        } else {
+            // Fallback para comando único
+            try {
+                const response = await fetch('/api/terminal/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command })
+                });
+
+                const result = await response.json();
+                
+                if (result.stdout) {
+                    output.innerHTML += `<div class="terminal-output-text">${result.stdout}</div>`;
+                }
+                if (result.stderr) {
+                    output.innerHTML += `<div class="terminal-error">${result.stderr}</div>`;
+                }
+                if (result.exitCode !== 0) {
+                    output.innerHTML += `<div class="terminal-error">Exit code: ${result.exitCode}</div>`;
+                }
+            } catch (error) {
+                output.innerHTML += `<div class="terminal-error">Erro: ${error.message}</div>`;
+            }
+        }
+
+        // Rolar para baixo
         output.scrollTop = output.scrollHeight;
     }
 
     // Limpar terminal
     clearTerminal() {
-        document.getElementById('terminalOutput').innerHTML = '';
+        const output = document.getElementById('terminalOutput');
+        if (output) {
+            output.innerHTML = '';
+        }
     }
 
     // Mostrar notificação
@@ -1773,7 +2977,6 @@ class SMXLiveBoard {
 
     // Limpeza ao sair
     destroy() {
-        console.log('Destruindo SMX LiveBoard...');
         
         if (this.timeInterval) {
             clearInterval(this.timeInterval);
@@ -1795,14 +2998,9 @@ class SMXLiveBoard {
             this.socket.disconnect();
             this.socket = null;
         }
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
-        }
         
         this.isInitialized = false;
         this.isConnected = false;
-        console.log('SMX LiveBoard destruído');
     }
 }
 
@@ -1810,13 +3008,20 @@ class SMXLiveBoard {
 document.addEventListener('DOMContentLoaded', () => {
     // Evitar múltiplas instâncias
     if (window.smxLiveBoard) {
-        console.log('SMX LiveBoard já inicializado');
         return;
     }
     
-    console.log('Inicializando SMX LiveBoard...');
     window.smxLiveBoard = new SMXLiveBoard();
     window.app = window.smxLiveBoard; // Alias para compatibilidade com os modais
+    
+    // Iniciar teste de velocidade automaticamente após 2 segundos
+    setTimeout(() => {
+        if (window.smxLiveBoard && window.smxLiveBoard.speedTest) {
+            window.smxLiveBoard.speedTest.startTest();
+            // Iniciar testes automáticos a cada 3 minutos
+            window.smxLiveBoard.speedTest.startAutoTest(3);
+        }
+    }, 2000);
 });
 
 // Limpeza ao sair da página
@@ -1825,4 +3030,5 @@ window.addEventListener('beforeunload', () => {
         window.smxLiveBoard.destroy();
     }
 });
+
 

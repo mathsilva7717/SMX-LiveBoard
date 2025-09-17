@@ -2,11 +2,43 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const isDev = process.env.NODE_ENV === 'development';
 
-// Manter uma referência global da janela
+// Manter uma referência global das janelas
 let mainWindow;
+let splashWindow;
+
+function createSplashWindow() {
+  // Criar janela de splash screen
+  splashWindow = new BrowserWindow({
+    width: 500,
+    height: 400,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      preload: path.join(__dirname, 'preload.js')
+    },
+    icon: path.join(__dirname, '../assets/icon.png'),
+    backgroundColor: '#0f0f0f',
+    show: false
+  });
+
+  // Carregar splash screen
+  splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+  
+  // Mostrar splash screen quando estiver pronto
+  splashWindow.once('ready-to-show', () => {
+    splashWindow.show();
+  });
+
+  // Centralizar splash screen
+  splashWindow.center();
+}
 
 function createWindow() {
-  // Criar a janela do navegador
+  // Criar a janela principal
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -41,6 +73,11 @@ function createWindow() {
 
   // Mostrar a janela quando estiver pronta
   mainWindow.once('ready-to-show', () => {
+    // Fechar splash screen e mostrar janela principal
+    if (splashWindow) {
+      splashWindow.close();
+      splashWindow = null;
+    }
     mainWindow.show();
     
     // Abrir DevTools em desenvolvimento
@@ -133,7 +170,15 @@ function createMenu() {
 }
 
 // Este método será chamado quando o Electron terminar de inicializar
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  // Criar splash screen primeiro
+  createSplashWindow();
+  
+  // Aguardar um pouco e criar janela principal
+  setTimeout(() => {
+    createWindow();
+  }, 1000);
+});
 
 // Sair quando todas as janelas estiverem fechadas
 app.on('window-all-closed', () => {
@@ -165,6 +210,17 @@ ipcMain.handle('get-system-info', async () => {
     arch: process.arch,
     version: process.version
   };
+});
+
+// Handler para splash screen
+ipcMain.on('splash-ready', () => {
+  // Splash screen está pronta, pode fechar após um delay
+  setTimeout(() => {
+    if (splashWindow) {
+      splashWindow.close();
+      splashWindow = null;
+    }
+  }, 2000);
 });
 
 // Prevenir navegação para URLs externas

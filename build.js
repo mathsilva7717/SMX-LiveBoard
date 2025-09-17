@@ -88,6 +88,15 @@ async function build() {
     // 2. Forçar limpeza da pasta dist (Windows)
     await forceCleanDist();
     
+    // 2.1. Limpar cache do npm
+    console.log('🧹 Limpando cache do npm...');
+    try {
+      await runCommand('npm', ['cache', 'clean', '--force']);
+      console.log('✅ Cache do npm limpo');
+    } catch (error) {
+      console.log('⚠️ Erro ao limpar cache do npm, continuando...');
+    }
+    
     // 3. Limpar builds anteriores
     console.log('🧹 Limpando builds anteriores...');
     const distDir = path.join(__dirname, 'dist');
@@ -102,11 +111,13 @@ async function build() {
       }
     }
 
-    // 3. Verificar se os arquivos HTML/CSS/JS existem
-    console.log('📄 Verificando arquivos HTML/CSS/JS...');
+    // 3. Verificar se os arquivos necessários existem
+    console.log('📄 Verificando arquivos necessários...');
     const indexHtml = path.join(__dirname, 'index.html');
     const stylesDir = path.join(__dirname, 'styles');
     const jsDir = path.join(__dirname, 'js');
+    const backendDir = path.join(__dirname, 'backend');
+    const electronDir = path.join(__dirname, 'electron');
     
     if (!fs.existsSync(indexHtml)) {
       throw new Error('Arquivo index.html não encontrado!');
@@ -117,7 +128,22 @@ async function build() {
     if (!fs.existsSync(jsDir)) {
       throw new Error('Pasta js não encontrada!');
     }
-    console.log('✅ Arquivos HTML/CSS/JS verificados');
+    if (!fs.existsSync(backendDir)) {
+      throw new Error('Pasta backend não encontrada!');
+    }
+    if (!fs.existsSync(electronDir)) {
+      throw new Error('Pasta electron não encontrada!');
+    }
+    
+    // Verificar se server.js existe (não deveria)
+    const serverJs = path.join(__dirname, 'server.js');
+    if (fs.existsSync(serverJs)) {
+      console.log('⚠️ Arquivo server.js encontrado - removendo...');
+      fs.unlinkSync(serverJs);
+      console.log('✅ server.js removido');
+    }
+    
+    console.log('✅ Todos os arquivos necessários verificados');
 
     // 5. Build do Electron
     console.log('🖥️ Fazendo build do Electron...');
@@ -125,7 +151,8 @@ async function build() {
     
     try {
       if (platform === 'win32') {
-        await runCommand('npm', ['run', 'build:win']);
+        console.log('📦 Criando executável portable para Windows...');
+        await runCommand('npm', ['run', 'build:portable']);
       } else if (platform === 'darwin') {
         await runCommand('npm', ['run', 'build:mac']);
       } else {
@@ -136,7 +163,7 @@ async function build() {
       
       // Método alternativo: usar electron-builder diretamente
       if (platform === 'win32') {
-        await runCommand('npx', ['electron-builder', '--win', '--publish=never']);
+        await runCommand('npx', ['electron-builder', '--win', 'portable', '--publish=never']);
       } else if (platform === 'darwin') {
         await runCommand('npx', ['electron-builder', '--mac', '--publish=never']);
       } else {

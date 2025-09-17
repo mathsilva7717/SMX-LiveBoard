@@ -56,51 +56,77 @@ class TelegramService extends EventEmitter {
 
   // Enviar alerta de sistema
   async sendSystemAlert(alertType, data, severity = 'INFO') {
-    const emoji = this.getSeverityEmoji(severity);
     const timestamp = new Date().toLocaleString('pt-BR');
+    const hostname = data.hostname || 'UNKNOWN';
     
-    let message = `${emoji} <b>ALERTA DO SISTEMA</b>\n\n`;
-    message += `<b>Tipo:</b> ${alertType}\n`;
-    message += `<b>Severidade:</b> ${severity}\n`;
-    message += `<b>Data/Hora:</b> ${timestamp}\n\n`;
-
-    // Adicionar dados específicos baseado no tipo
+    let message = '';
+    
+    // Formato estiloso baseado no tipo
     switch (alertType) {
       case 'CPU':
-        message += `<b>Uso da CPU:</b> ${data.usage}%\n`;
+        const cpuStatus = data.usage > 80 ? '[HIGH]' : data.usage > 60 ? '[MEDIUM]' : '[NORMAL]';
+        message = `🔥 <b>SMX CPU Alert</b>\n`;
+        message += `============\n`;
+        message += `🖥️ <b>CPU:</b> ${data.usage}% ${cpuStatus}\n`;
+        message += `⚡ <b>CORES:</b> ${data.cores || 'N/A'}\n`;
+        message += `🖥️ <b>HOST:</b> ${hostname}\n`;
+        message += `⏱️ <b>TIME:</b> ${timestamp}\n\n`;
+        message += `➡️ CPU monitor ativo 🔥`;
         break;
       
       case 'MEMORY':
-        message += `<b>Uso da Memória:</b> ${data.usage}%\n`;
-        message += `<b>Memória Usada:</b> ${data.used}\n`;
-        message += `<b>Memória Total:</b> ${data.total}\n`;
+        const memStatus = data.usage > 85 ? '[HIGH]' : data.usage > 70 ? '[MEDIUM]' : '[NORMAL]';
+        message = `💾 <b>SMX Memory Alert</b>\n`;
+        message += `============\n`;
+        message += `💾 <b>RAM:</b> ${data.usage}% ${memStatus}\n`;
+        message += `📊 <b>USED:</b> ${this.formatBytes(data.used || 0)}\n`;
+        message += `📊 <b>TOTAL:</b> ${this.formatBytes(data.total || 0)}\n`;
+        message += `🖥️ <b>HOST:</b> ${hostname}\n`;
+        message += `⏱️ <b>TIME:</b> ${timestamp}\n\n`;
+        message += `➡️ Memory monitor ativo 💾`;
         break;
       
       case 'DISK':
-        message += `<b>Uso do Disco:</b> ${data.usage}%\n`;
-        message += `<b>Espaço Usado:</b> ${data.used}\n`;
-        message += `<b>Espaço Total:</b> ${data.total}\n`;
+        const diskStatus = data.usage > 90 ? '[HIGH]' : data.usage > 80 ? '[MEDIUM]' : '[NORMAL]';
+        message = `💿 <b>SMX Disk Alert</b>\n`;
+        message += `============\n`;
+        message += `💿 <b>DISK:</b> ${data.usage}% ${diskStatus}\n`;
+        message += `📊 <b>USED:</b> ${this.formatBytes(data.used || 0)}\n`;
+        message += `📊 <b>TOTAL:</b> ${this.formatBytes(data.total || 0)}\n`;
+        message += `🖥️ <b>HOST:</b> ${hostname}\n`;
+        message += `⏱️ <b>TIME:</b> ${timestamp}\n\n`;
+        message += `➡️ Disk monitor ativo 💿`;
         break;
       
-      case 'NETWORK':
-        message += `<b>Status:</b> ${data.status}\n`;
-        message += `<b>Latência:</b> ${data.latency}ms\n`;
-        break;
-      
-      case 'PROCESS':
-        message += `<b>Processo:</b> ${data.name}\n`;
-        message += `<b>PID:</b> ${data.pid}\n`;
-        message += `<b>CPU:</b> ${data.cpu}%\n`;
-        message += `<b>Memória:</b> ${data.memory}MB\n`;
+      case 'PROCESSES':
+        message = `⚙️ <b>SMX Processes Alert</b>\n`;
+        message += `============\n`;
+        message += `🔝 <b>TOP 5 PROCESSOS ATIVOS:</b>\n\n`;
+        
+        if (data.processes && data.processes.length > 0) {
+          data.processes.forEach((proc, index) => {
+            const cpuEmoji = proc.cpu > 50 ? '🔥' : proc.cpu > 20 ? '⚡' : '💤';
+            message += `${index + 1}. ${cpuEmoji} ${proc.name}\n`;
+            message += `   <b>CPU:</b> ${proc.cpu}% • <b>RAM:</b> ${proc.memory}MB • <b>PID:</b> ${proc.pid}\n\n`;
+          });
+        } else {
+          message += `❌ Nenhum processo encontrado\n\n`;
+        }
+        
+        message += `🖥️ <b>HOST:</b> ${hostname}\n`;
+        message += `⏱️ <b>TIME:</b> ${timestamp}\n\n`;
+        message += `➡️ Process monitor ativo ⚙️`;
         break;
       
       default:
-        message += `<b>Dados:</b>\n<code>${JSON.stringify(data, null, 2)}</code>\n`;
+        message = `📊 <b>SMX System Alert</b>\n`;
+        message += `============\n`;
+        message += `⚠️ <b>TIPO:</b> ${alertType}\n`;
+        message += `📊 <b>DADOS:</b> ${JSON.stringify(data, null, 2)}\n`;
+        message += `🖥️ <b>HOST:</b> ${hostname}\n`;
+        message += `⏱️ <b>TIME:</b> ${timestamp}\n\n`;
+        message += `➡️ System monitor ativo 📊`;
     }
-
-    // Adicionar informações do sistema
-    message += `\n<b>Hostname:</b> ${data.hostname || 'N/A'}\n`;
-    message += `<b>Sistema:</b> ${data.os || 'N/A'}`;
 
     const result = await this.sendMessage(message, {
       parseMode: 'HTML',
@@ -124,36 +150,44 @@ class TelegramService extends EventEmitter {
   async sendStatusReport(systemData) {
     const timestamp = new Date().toLocaleString('pt-BR');
     
-    let message = `📊 <b>RELATÓRIO DE STATUS DO SISTEMA</b>\n\n`;
-    message += `<b>Data/Hora:</b> ${timestamp}\n\n`;
     
-    // CPU
-    message += `🖥️ <b>CPU:</b> ${systemData.cpu?.usage || 0}%\n`;
+    // Determinar status do sistema
+    const cpuUsage = systemData.cpu?.usage || 0;
+    const memUsed = systemData.memory?.used || 0;
+    const memTotal = systemData.memory?.total || 0;
+    const memUsage = memTotal > 0 ? Math.round((memUsed / memTotal) * 100) : (systemData.memory?.usage || 0);
+    const diskUsage = systemData.fsSize?.[0]?.use || 0;
+    const networkStatus = systemData.network?.operstate || 'unknown';
+    const networkLatency = systemData.network?.latency || 0;
     
-    // Memória
-    message += `💾 <b>Memória:</b> ${systemData.mem?.usage || 0}%\n`;
-    message += `📊 <b>Usado:</b> ${this.formatBytes(systemData.mem?.used || 0)}\n`;
-    message += `📊 <b>Total:</b> ${this.formatBytes(systemData.mem?.total || 0)}\n\n`;
+    // Determinar status de CPU
+    const cpuStatus = cpuUsage > 80 ? '[HIGH]' : cpuUsage > 60 ? '[MEDIUM]' : '[NORMAL]';
     
-    // Disco
-    if (systemData.fsSize?.[0]) {
-      const disk = systemData.fsSize[0];
-      message += `💿 <b>Disco:</b> ${disk.use || 0}%\n`;
-      message += `📊 <b>Usado:</b> ${this.formatBytes(disk.used || 0)}\n`;
-      message += `📊 <b>Total:</b> ${this.formatBytes(disk.size || 0)}\n\n`;
-    }
+    // Determinar status de uptime
+    const uptimeSeconds = systemData.time?.uptime || 0;
+    const uptimeStatus = uptimeSeconds > 86400 ? 'STABLE' : 'RECENT';
+    
+    let message = `⚡ <b>SMX LiveBoard Report</b>\n`;
+    message += `=================\n`;
+    message += `⚡ <b>CPU:</b> ${cpuUsage}%  ${cpuStatus}\n`;
     
     // Rede
-    message += `🌐 <b>Rede:</b> ${systemData.networkStats?.[0]?.operstate || 'N/A'}\n`;
-    message += `⏱️ <b>Uptime:</b> ${this.formatUptime(systemData.time?.uptime || 0)}\n\n`;
+    const statusEmoji = networkStatus === 'up' ? '🟢' : '🔴';
+    const statusText = networkStatus === 'up' ? 'UP' : 'DOWN';
+    message += `🌐 <b>REDE:</b> ${statusText} ${statusEmoji} • LAT: ${networkLatency}ms\n`;
     
-    // Top processos
-    if (systemData.processes?.length > 0) {
-      message += `🔝 <b>Top 3 Processos:</b>\n`;
-      systemData.processes.slice(0, 3).forEach((proc, index) => {
-        message += `${index + 1}. ${proc.name} (${proc.cpu}% CPU)\n`;
-      });
-    }
+    // Memória
+    message += `💾 <b>RAM:</b> ${memUsage}% [${this.formatBytes(memUsed)} | ${this.formatBytes(memTotal)}]\n`;
+    
+    // Uptime
+    message += `⏱️ <b>UPTIME:</b> ${this.formatUptime(uptimeSeconds)} • [${uptimeStatus}]\n`;
+    
+    // Hostname
+    const hostname = systemData.osInfo?.hostname || 'UNKNOWN';
+    message += `🖥️ <b>HOST:</b> ${hostname}\n\n`;
+    
+    // Status final
+    message += `➡️ processes em activity system <b>on</b> ${statusEmoji}`;
 
     const result = await this.sendMessage(message, {
       parseMode: 'HTML'

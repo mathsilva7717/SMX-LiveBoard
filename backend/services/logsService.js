@@ -16,6 +16,7 @@ class LogsService extends EventEmitter {
     };
     
     this.initializeLogFile();
+    this.startSystemLogging();
   }
 
   // Inicializar arquivo de log
@@ -267,6 +268,60 @@ class LogsService extends EventEmitter {
       default:
         throw new Error('Formato não suportado. Use: json, csv, txt');
     }
+  }
+
+  // Iniciar logging do sistema
+  startSystemLogging() {
+    // Log de inicialização
+    this.info('LogsService inicializado', 'SYSTEM');
+    
+    // Monitorar eventos do sistema
+    this.monitorSystemEvents();
+    
+    // Log periódico de status
+    setInterval(() => {
+      this.info('Sistema funcionando normalmente', 'MONITOR');
+    }, 30000); // A cada 30 segundos
+  }
+
+  // Monitorar eventos do sistema
+  monitorSystemEvents() {
+    // Monitorar uso de memória
+    setInterval(() => {
+      const memUsage = process.memoryUsage();
+      const memUsageMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+      
+      if (memUsageMB > 100) {
+        this.warning(`Alto uso de memória: ${memUsageMB}MB`, 'MEMORY', { 
+          heapUsed: memUsageMB,
+          heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024)
+        });
+      } else {
+        this.info(`Uso de memória: ${memUsageMB}MB`, 'MEMORY');
+      }
+    }, 60000); // A cada minuto
+
+    // Monitorar CPU
+    setInterval(() => {
+      const cpuUsage = process.cpuUsage();
+      const cpuPercent = (cpuUsage.user + cpuUsage.system) / 1000000; // Convert to seconds
+      
+      if (cpuPercent > 0.5) {
+        this.warning(`Alto uso de CPU: ${cpuPercent.toFixed(2)}s`, 'CPU', { 
+          user: cpuUsage.user,
+          system: cpuUsage.system
+        });
+      }
+    }, 30000); // A cada 30 segundos
+
+    // Monitorar uptime
+    setInterval(() => {
+      const uptime = process.uptime();
+      const hours = Math.floor(uptime / 3600);
+      const minutes = Math.floor((uptime % 3600) / 60);
+      
+      this.info(`Uptime: ${hours}h ${minutes}m`, 'SYSTEM', { uptime });
+    }, 300000); // A cada 5 minutos
   }
 
   // Monitorar logs em tempo real

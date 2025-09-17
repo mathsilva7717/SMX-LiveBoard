@@ -16,7 +16,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Remover listeners
   removeAllListeners: (channel) => {
     ipcRenderer.removeAllListeners(channel);
-  }
+  },
+  
+  // Splash screen
+  splashReady: () => ipcRenderer.send('splash-ready')
 });
 
 // Log para debug

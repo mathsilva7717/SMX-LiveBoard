@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles/main.css?v=20250115-3">
+    <link rel="stylesheet" href="styles/main.css?v=20250115-9">
     <link rel="icon" href="assets/icon.ico">
 </head>
 <body>
@@ -23,15 +23,10 @@
                     <div class="logo-icon">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                            <path d="M9 9h6v6H9z"/>
-                            <path d="M9 1v6"/>
-                            <path d="M15 1v6"/>
-                            <path d="M9 17v6"/>
-                            <path d="M15 17v6"/>
-                            <path d="M1 9h6"/>
-                            <path d="M17 9h6"/>
-                            <path d="M1 15h6"/>
-                            <path d="M17 15h6"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <circle cx="15.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15c0 1-1 2-2 2H5c-1 0-2-1-2-2"/>
+                            <path d="M9 9l3 3 3-3"/>
                         </svg>
                     </div>
                     <span class="logo-title">SMX LiveBoard</span>
@@ -57,16 +52,6 @@
                     </svg>
                     <span>Alert</span>
                 </button>
-                <button class="control-btn ssh-btn" id="sshBtn" title="Conexão SSH">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                        <line x1="8" y1="21" x2="16" y2="21"/>
-                        <line x1="12" y1="17" x2="12" y2="21"/>
-                        <path d="M7 8h10"/>
-                        <path d="M7 12h6"/>
-                    </svg>
-                    <span>SSH</span>
-                </button>
                 <button class="control-btn logs-btn" id="logsBtn" title="Visualizar Logs">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -76,6 +61,16 @@
                         <polyline points="10,9 9,9 8,9"/>
                     </svg>
                     <span>Logs</span>
+                </button>
+                <button class="control-btn ssh-btn" id="sshBtn" title="Conexão SSH">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                        <path d="M6 9h12"/>
+                        <path d="M6 13h8"/>
+                    </svg>
+                    <span>SSH</span>
                 </button>
                 <button class="control-btn terminal-btn" id="terminalBtn" title="Terminal Integrado">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -114,7 +109,7 @@
             <div class="loading-spinner"></div>
             <p>Carregando dados do sistema...</p>
             <p style="font-size: 0.9rem; color: #999; margin-top: 1rem;">
-                Verificando conexão com o backend...
+                Verificando conexão...
             </p>
         </div>
 
@@ -134,6 +129,8 @@
                         </div>
                     </div>
                     
+                    <div class="cpu-brand" id="cpuBrand">--</div>
+                    
                     <!-- Sphere Style CPU Gauge -->
                     <div class="sphere-container">
                         <div class="sphere-gauge">
@@ -150,8 +147,8 @@
                                 
                                 <!-- Needle -->
                                 <g class="needle" id="cpuNeedle">
-                                    <line x1="60" y1="60" x2="60" y2="20" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-                                    <circle cx="60" cy="60" r="3" fill="#ffffff"/>
+                                    <line x1="60" y1="60" x2="60" y2="20" stroke="#00d4ff" stroke-width="3" stroke-linecap="round"/>
+                                    <circle cx="60" cy="60" r="3" fill="#00d4ff"/>
                                 </g>
                                 
                                 <!-- Hour Marks -->
@@ -167,6 +164,7 @@
                     </div>
                     
                     <div class="gauge-details">
+                        <!-- Nome do processador removido - não está sendo capturado corretamente -->
                         <div class="cpu-percentage" id="cpuGaugeValue">0%</div>
                         <div class="gauge-label">Uso atual</div>
                         <div class="gauge-trend">
@@ -234,6 +232,7 @@
                     <div class="gauge-details">
                         <div class="gauge-label" id="ramUsage">-- B</div>
                         <div class="gauge-sublabel" id="ramTotal">de -- B</div>
+                        <div class="memory-type" id="memoryType">--</div>
                         <div class="gauge-trend">
                             <canvas id="ramTrend" width="80" height="20"></canvas>
                         </div>
@@ -261,6 +260,11 @@
                         </svg>
                     </div>
                     <div class="disk-indicators">
+                        <div class="disk-info">
+                            <div class="disk-model" id="diskModel" title="Nome completo do disco">--</div>
+                            <div class="disk-type" id="diskType">--</div>
+                            <div class="disk-count" id="diskCount" style="display: none;">--</div>
+                        </div>
                         <div class="disk-usage-bar">
                             <div class="disk-usage-fill" id="diskUsageBar"></div>
                         </div>
@@ -297,43 +301,38 @@
                 <div class="gauge-container network-gauge">
                     <div class="gauge-header">
                         <span class="gauge-title">REDE</span>
-                        <div class="gauge-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <line x1="2" y1="12" x2="22" y2="12"/>
-                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        <!-- Botão de Teste de Velocidade - Discreto -->
+                        <button id="speedTestButton" class="speed-test-button-mini" onclick="startSpeedTest()" title="Teste de Velocidade">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                             </svg>
-                        </div>
-                    </div>
-                    <div class="circular-gauge">
-                        <svg class="gauge-svg" viewBox="0 0 120 120">
-                            <circle class="gauge-bg" cx="60" cy="60" r="50" fill="none" stroke="#1a1a1a" stroke-width="8"/>
-                            <circle class="gauge-fill" id="networkGauge" cx="60" cy="60" r="50" fill="none" stroke="#ff6b6b" stroke-width="8" 
-                                    stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" transform="rotate(-90 60 60)"/>
-                            <text class="gauge-value" x="60" y="65" text-anchor="middle" id="networkGaugeValue">UP</text>
-                        </svg>
+                        </button>
                     </div>
                     <div class="network-indicators">
                         <div class="network-status-indicator">
-                            <div class="network-status-dot"></div>
                             <span id="networkStatus">ONLINE</span>
                         </div>
+                        <div class="network-ip-address">
+                            <span id="networkIP">192.168.15.2</span>
+                        </div>
+                        
                         <div class="network-speed-bars">
                             <div class="speed-bar">
                                 <span class="speed-bar-label">↓ DOWN</span>
                                 <div class="speed-bar-container">
-                                    <div class="speed-bar-fill download"></div>
+                                    <div class="speed-bar-fill download" id="downloadBar"></div>
                                 </div>
-                                <span class="speed-value download" id="downloadSpeed">1.2 MB/s</span>
+                                <span class="speed-value download" id="downloadSpeed">-- MB/s</span>
                             </div>
                             <div class="speed-bar">
                                 <span class="speed-bar-label">↑ UP</span>
                                 <div class="speed-bar-container">
-                                    <div class="speed-bar-fill upload"></div>
+                                    <div class="speed-bar-fill upload" id="uploadBar"></div>
                                 </div>
-                                <span class="speed-value upload" id="uploadSpeed">0.8 MB/s</span>
+                                <span class="speed-value upload" id="uploadSpeed">-- MB/s</span>
                             </div>
                         </div>
+                        
                         <!-- Internet Signal Waves -->
                         <div class="internet-signal">
                             <div class="signal-wave wave-1"></div>
@@ -343,7 +342,7 @@
                         </div>
                     </div>
                     <div class="gauge-details">
-                        <div class="gauge-label" id="networkStatus">Conectado</div>
+                        <div class="gauge-label" id="networkStatusDetail">Conectado</div>
                         <div class="network-stats">
                             <div class="network-stat">
                                 <span class="network-label">↓</span>
@@ -656,124 +655,11 @@
                                 </tr>
                             </thead>
                             <tbody id="processesTableBody">
-                                <tr class="process-row" data-name="chrome.exe" data-pid="1234" data-cpu="15.2" data-memory="512">
-                                    <td class="process-name">chrome.exe</td>
-                                    <td class="process-pid">1234</td>
-                                    <td class="process-cpu">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">15.2%</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill cpu-bar" style="width: 15.2%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="process-memory">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">512 MB</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill memory-bar" style="width: 51.2%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="process-row" data-name="code.exe" data-pid="5678" data-cpu="8.5" data-memory="256">
-                                    <td class="process-name">code.exe</td>
-                                    <td class="process-pid">5678</td>
-                                    <td class="process-cpu">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">8.5%</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill cpu-bar" style="width: 8.5%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="process-memory">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">256 MB</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill memory-bar" style="width: 25.6%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="process-row" data-name="node.exe" data-pid="9012" data-cpu="5.1" data-memory="128">
-                                    <td class="process-name">node.exe</td>
-                                    <td class="process-pid">9012</td>
-                                    <td class="process-cpu">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">5.1%</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill cpu-bar" style="width: 5.1%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="process-memory">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">128 MB</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill memory-bar" style="width: 12.8%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="process-row" data-name="explorer.exe" data-pid="3456" data-cpu="2.3" data-memory="64">
-                                    <td class="process-name">explorer.exe</td>
-                                    <td class="process-pid">3456</td>
-                                    <td class="process-cpu">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">2.3%</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill cpu-bar" style="width: 2.3%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="process-memory">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">64 MB</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill memory-bar" style="width: 6.4%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="process-row" data-name="firefox.exe" data-pid="7890" data-cpu="12.8" data-memory="384">
-                                    <td class="process-name">firefox.exe</td>
-                                    <td class="process-pid">7890</td>
-                                    <td class="process-cpu">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">12.8%</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill cpu-bar" style="width: 12.8%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="process-memory">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">384 MB</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill memory-bar" style="width: 38.4%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="process-row" data-name="discord.exe" data-pid="4321" data-cpu="7.5" data-memory="300">
-                                    <td class="process-name">discord.exe</td>
-                                    <td class="process-pid">4321</td>
-                                    <td class="process-cpu">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">7.5%</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill cpu-bar" style="width: 7.5%"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="process-memory">
-                                        <div class="metric-with-bar">
-                                            <span class="metric-value">300 MB</span>
-                                            <div class="metric-bar">
-                                                <div class="metric-bar-fill memory-bar" style="width: 30%"></div>
-                                            </div>
-                                        </div>
+                                <!-- Processos serão carregados dinamicamente via JavaScript -->
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: #999; padding: 2rem;">
+                                        <div class="loading-spinner" style="display: inline-block; margin-right: 0.5rem;"></div>
+                                        Carregando processos...
                                     </td>
                                 </tr>
                             </tbody>
@@ -782,322 +668,10 @@
                 </div>
             </div>
 
-            <!-- Gráficos Históricos e Monitoramento de Serviços -->
-            <div class="monitoring-section">
-                <!-- Gráficos Históricos -->
-                <div class="panel historical-panel">
-                    <div class="panel-header">
-                        <h3 class="panel-title">Gráficos Históricos</h3>
-                        <span class="panel-subtitle">Tendências e análise temporal</span>
-                        <div class="chart-controls">
-                            <button class="time-btn active" data-period="1h">1H</button>
-                            <button class="time-btn" data-period="6h">6H</button>
-                            <button class="time-btn" data-period="24h">24H</button>
-                            <button class="time-btn" data-period="7d">7D</button>
-                        </div>
-                    </div>
-                    
-                    <div class="charts-grid">
-                        <!-- CPU Histórico -->
-                        <div class="chart-container">
-                            <div class="chart-header">
-                                <h4>CPU Usage</h4>
-                                <div class="chart-legend">
-                                    <span class="legend-item">
-                                        <div class="legend-color cpu-color"></div>
-                                        CPU
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="cpuHistoricalChart"></canvas>
-                            </div>
-                            <div class="chart-stats">
-                                <div class="stat-item">
-                                    <span class="stat-label">Média:</span>
-                                    <span class="stat-value" id="cpuAvg">0%</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Pico:</span>
-                                    <span class="stat-value" id="cpuPeak">0%</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Tendência:</span>
-                                    <span class="stat-value trend" id="cpuTrend">→</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Memória Histórico -->
-                        <div class="chart-container">
-                            <div class="chart-header">
-                                <h4>Memory Usage</h4>
-                                <div class="chart-legend">
-                                    <span class="legend-item">
-                                        <div class="legend-color memory-color"></div>
-                                        RAM
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="memoryHistoricalChart"></canvas>
-                            </div>
-                            <div class="chart-stats">
-                                <div class="stat-item">
-                                    <span class="stat-label">Média:</span>
-                                    <span class="stat-value" id="memoryAvg">0 GB</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Pico:</span>
-                                    <span class="stat-value" id="memoryPeak">0 GB</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Tendência:</span>
-                                    <span class="stat-value trend" id="memoryTrend">→</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Rede Histórico -->
-                        <div class="chart-container">
-                            <div class="chart-header">
-                                <h4>Network Activity</h4>
-                                <div class="chart-legend">
-                                    <span class="legend-item">
-                                        <div class="legend-color download-color"></div>
-                                        Download
-                                    </span>
-                                    <span class="legend-item">
-                                        <div class="legend-color upload-color"></div>
-                                        Upload
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="networkHistoricalChart"></canvas>
-                            </div>
-                            <div class="chart-stats">
-                                <div class="stat-item">
-                                    <span class="stat-label">Total ↓:</span>
-                                    <span class="stat-value" id="totalDownload">0 MB</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Total ↑:</span>
-                                    <span class="stat-value" id="totalUpload">0 MB</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Velocidade:</span>
-                                    <span class="stat-value" id="avgSpeed">0 MB/s</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Disco Histórico -->
-                        <div class="chart-container">
-                            <div class="chart-header">
-                                <h4>Disk Usage</h4>
-                                <div class="chart-legend">
-                                    <span class="legend-item">
-                                        <div class="legend-color disk-color"></div>
-                                        Disco
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="diskHistoricalChart"></canvas>
-                            </div>
-                            <div class="chart-stats">
-                                <div class="stat-item">
-                                    <span class="stat-label">Usado:</span>
-                                    <span class="stat-value" id="diskUsed">-- GB</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Livre:</span>
-                                    <span class="stat-value" id="diskFree">-- GB</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Crescimento:</span>
-                                    <span class="stat-value" id="diskGrowth">0 GB/dia</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Monitoramento de Serviços -->
-                <div class="panel services-panel">
-                    <div class="panel-header">
-                        <h3 class="panel-title">Monitoramento de Serviços</h3>
-                        <span class="panel-subtitle">Health checks e disponibilidade</span>
-                        <div class="services-controls">
-                            <button class="control-btn add-service-btn" id="addServiceBtn" title="Adicionar Serviço">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="12" y1="5" x2="12" y2="19"/>
-                                    <line x1="5" y1="12" x2="19" y2="12"/>
-                                </svg>
-                                <span>Adicionar</span>
-                            </button>
-                            <button class="control-btn refresh-services-btn" id="refreshServicesBtn" title="Atualizar Serviços">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="23 4 23 10 17 10"/>
-                                    <polyline points="1 20 1 14 7 14"/>
-                                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="services-grid">
-                        <!-- Serviço HTTP -->
-                        <div class="service-card" data-service="http">
-                            <div class="service-header">
-                                <div class="service-status online" id="httpStatus">
-                                    <div class="status-dot"></div>
-                                    <span class="status-text">ONLINE</span>
-                                </div>
-                                <div class="service-type">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                                    </svg>
-                                    HTTP
-                                </div>
-                            </div>
-                            <div class="service-info">
-                                <h4 class="service-name">API Principal</h4>
-                                <p class="service-url">https://api.exemplo.com/health</p>
-                                <div class="service-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">Response Time:</span>
-                                        <span class="metric-value" id="httpResponseTime">45ms</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Uptime:</span>
-                                        <span class="metric-value" id="httpUptime">99.9%</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Last Check:</span>
-                                        <span class="metric-value" id="httpLastCheck">2s ago</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="service-chart">
-                                <canvas id="httpResponseChart" width="200" height="60"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Serviço TCP -->
-                        <div class="service-card" data-service="tcp">
-                            <div class="service-header">
-                                <div class="service-status online" id="tcpStatus">
-                                    <div class="status-dot"></div>
-                                    <span class="status-text">ONLINE</span>
-                                </div>
-                                <div class="service-type">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                                        <line x1="8" y1="21" x2="16" y2="21"/>
-                                        <line x1="12" y1="17" x2="12" y2="21"/>
-                                    </svg>
-                                    TCP
-                                </div>
-                            </div>
-                            <div class="service-info">
-                                <h4 class="service-name">PostgreSQL</h4>
-                                <p class="service-url">localhost:5432</p>
-                                <div class="service-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">Connection Time:</span>
-                                        <span class="metric-value" id="tcpConnectionTime">12ms</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Uptime:</span>
-                                        <span class="metric-value" id="tcpUptime">100%</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Last Check:</span>
-                                        <span class="metric-value" id="tcpLastCheck">5s ago</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="service-chart">
-                                <canvas id="tcpConnectionChart" width="200" height="60"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Serviço UDP -->
-                        <div class="service-card" data-service="udp">
-                            <div class="service-header">
-                                <div class="service-status warning" id="udpStatus">
-                                    <div class="status-dot"></div>
-                                    <span class="status-text">INSTÁVEL</span>
-                                </div>
-                                <div class="service-type">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <path d="M12 6v6l4 2"/>
-                                    </svg>
-                                    UDP
-                                </div>
-                            </div>
-                            <div class="service-info">
-                                <h4 class="service-name">DNS Server</h4>
-                                <p class="service-url">8.8.8.8:53</p>
-                                <div class="service-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">Response Time:</span>
-                                        <span class="metric-value" id="udpResponseTime">28ms</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Uptime:</span>
-                                        <span class="metric-value" id="udpUptime">95.2%</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Last Check:</span>
-                                        <span class="metric-value" id="udpLastCheck">1s ago</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="service-chart">
-                                <canvas id="udpResponseChart" width="200" height="60"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Card de Informações -->
-                        <div class="service-card info-card">
-                            <div class="service-header">
-                                <div class="service-status info">
-                                    <div class="status-dot"></div>
-                                    <span class="status-text">INFO</span>
-                                </div>
-                                <div class="service-type">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <path d="M12 16v-4"/>
-                                        <path d="M12 8h.01"/>
-                                    </svg>
-                                    SISTEMA
-                                </div>
-                            </div>
-                            <div class="service-info">
-                                <h4 class="service-name">Monitoramento Ativo</h4>
-                                <p class="service-url">SMX LiveBoard v1.0</p>
-                                <div class="service-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">Serviços:</span>
-                                        <span class="metric-value" id="totalServices">3</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Uptime:</span>
-                                        <span class="metric-value" id="systemUptime">100%</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Status:</span>
-                                        <span class="metric-value" id="systemStatus">OPERACIONAL</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1105,72 +679,217 @@
         </div>
     </main>
 
-    <!-- Modal para Adicionar Serviço -->
-    <div class="modal" id="addServiceModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Adicionar Novo Serviço</h3>
-                <button class="modal-close" id="closeModal">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <div class="footer-logo">
+                    <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <rect x="7" y="7" width="10" height="10" rx="1" ry="1"/>
+                        <line x1="7" y1="3" x2="7" y2="7"/>
+                        <line x1="17" y1="3" x2="17" y2="7"/>
+                        <line x1="7" y1="17" x2="7" y2="21"/>
+                        <line x1="17" y1="17" x2="17" y2="21"/>
+                    </svg>
+                    <span class="footer-title">SMX LiveBoard</span>
+                </div>
+            </div>
+            
+            <div class="footer-center">
+                <div class="footer-tech">
+                    <span class="tech-item">
+                        <svg class="tech-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="tech-text">Node.js</span>
+                    </span>
+                    <span class="tech-item">
+                        <svg class="tech-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 16V8A2 2 0 0 0 19 6H5A2 2 0 0 0 3 8V16A2 2 0 0 0 5 18H19A2 2 0 0 0 21 16Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M7 10H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M7 14H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span class="tech-text">Electron</span>
+                    </span>
+                    <span class="tech-item">
+                        <svg class="tech-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 1V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M12 21V23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M4.22 4.22L5.64 5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M18.36 18.36L19.78 19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M1 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M21 12H23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M4.22 19.78L5.64 18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M18.36 5.64L19.78 4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span class="tech-text">Socket.IO</span>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="footer-right">
+                <div class="footer-stats">
+                    <span class="stat-item">
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6A2 2 0 0 0 4 4V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value">MIT</span>
+                            <span class="stat-label">Licença</span>
+                        </div>
+                    </span>
+                    <span class="stat-item">
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="2"/>
+                                <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value">Windows</span>
+                            <span class="stat-label">Ambiente</span>
+                        </div>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Sistema de Notificações Toast -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Modal SSH -->
+    <div id="sshModal" class="ssh-modal-overlay" style="display: none;">
+        <div class="ssh-modal-content">
+            <div class="ssh-modal-header">
+                <div class="ssh-modal-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                        <path d="M6 9h12"/>
+                        <path d="M6 13h8"/>
+                    </svg>
+                    <span>SSH Terminal</span>
+                </div>
+                <button class="ssh-modal-close" id="sshModalClose">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"/>
                         <line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
                 </button>
             </div>
-            <div class="modal-body">
-                <form id="addServiceForm">
-                    <div class="form-group">
-                        <label for="serviceName">Nome do Serviço</label>
-                        <input type="text" id="serviceName" placeholder="Ex: API de Pagamentos" required>
+            
+            <div class="ssh-modal-body">
+                <!-- Formulário de Conexão -->
+                <div class="ssh-form-container" id="sshFormContainer">
+                    <form id="sshForm" class="ssh-form">
+                        <div class="ssh-form-grid">
+                            <div class="ssh-form-group">
+                                <label for="sshHost">Host/IP</label>
+                                <input type="text" id="sshHost" name="host" placeholder="192.168.1.100" required>
+                            </div>
+                            <div class="ssh-form-group">
+                                <label for="sshPort">Porta</label>
+                                <input type="number" id="sshPort" name="port" placeholder="22" value="22" required>
+                            </div>
+                            <div class="ssh-form-group">
+                                <label for="sshUsername">Usuário</label>
+                                <input type="text" id="sshUsername" name="username" placeholder="root" required>
+                            </div>
+                            <div class="ssh-form-group">
+                                <label for="sshPassword">Senha</label>
+                                <div class="password-input-container">
+                                    <input type="password" id="sshPassword" name="password" placeholder="••••••••" required>
+                                    <button type="button" class="password-toggle" id="sshPasswordToggle">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                            <circle cx="12" cy="12" r="3"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="ssh-form-actions">
+                            <button type="button" class="ssh-btn ssh-btn-test" id="sshTestConnection">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                                </svg>
+                                Testar
+                            </button>
+                            <button type="submit" class="ssh-btn ssh-btn-connect" id="sshConnect">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M8 2v4"/>
+                                    <path d="M16 2v4"/>
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                    <path d="M3 10h18"/>
+                                </svg>
+                                Conectar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Terminal SSH -->
+                <div class="ssh-terminal-container" id="sshTerminalContainer" style="display: none;">
+                    <div class="ssh-terminal-header">
+                        <div class="ssh-connection-info">
+                            <div class="ssh-connection-status" id="sshConnectionStatus">
+                                <span class="ssh-status-dot"></span>
+                                <span class="ssh-status-text">Conectado</span>
+                            </div>
+                            <div class="ssh-connection-details" id="sshConnectionDetails">user@host:22</div>
+                        </div>
+                        <div class="ssh-terminal-controls">
+                            <button class="ssh-control-btn" id="sshDisconnect" title="Desconectar">
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                    <polyline points="16,17 21,12 16,7"/>
+                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                                </svg>
+                            </button>
+                            <button class="ssh-control-btn" id="sshClear" title="Limpar Terminal">
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18"/>
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="serviceType">Tipo de Serviço</label>
-                        <select id="serviceType" required>
-                            <option value="">Selecione o tipo</option>
-                            <option value="http">HTTP/HTTPS</option>
-                            <option value="tcp">TCP</option>
-                            <option value="udp">UDP</option>
-                        </select>
+                    <div class="ssh-terminal-content">
+                        <div class="ssh-terminal-output" id="sshTerminalOutput">
+                            <div class="ssh-terminal-line">
+                                <span class="ssh-terminal-prompt">$</span>
+                                <span class="ssh-terminal-text">Aguardando conexão...</span>
+                            </div>
+                        </div>
+                        <div class="ssh-terminal-input-container">
+                            <span class="ssh-terminal-prompt">$</span>
+                            <input type="text" class="ssh-terminal-input" id="sshTerminalInput" placeholder="Digite um comando..." disabled>
+                        </div>
                     </div>
-                    
-                    <div class="form-group" id="urlGroup">
-                        <label for="serviceUrl">URL ou Endereço</label>
-                        <input type="text" id="serviceUrl" placeholder="https://api.exemplo.com/health" required>
-                    </div>
-                    
-                    <div class="form-group" id="portGroup" style="display: none;">
-                        <label for="servicePort">Porta</label>
-                        <input type="number" id="servicePort" placeholder="5432" min="1" max="65535">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="checkInterval">Intervalo de Verificação (segundos)</label>
-                        <select id="checkInterval">
-                            <option value="30">30 segundos</option>
-                            <option value="60" selected>1 minuto</option>
-                            <option value="300">5 minutos</option>
-                            <option value="600">10 minutos</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="timeout">Timeout (milissegundos)</label>
-                        <input type="number" id="timeout" value="5000" min="1000" max="30000">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="cancelAddService">Cancelar</button>
-                <button type="submit" class="btn btn-primary" id="saveService">Adicionar Serviço</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="js/app.js?v=20250115-3"></script>
-    <script src="js/historical-charts.js?v=20250915-4"></script>
-    <script src="js/service-monitoring.js?v=20250915-4"></script>
+    <script src="js/logs.js?v=20250115-2"></script>
+    <script src="js/ssh.js?v=20250115-1"></script>
+    <script src="js/app.js?v=20250115-4"></script>
 </body>
 </html>

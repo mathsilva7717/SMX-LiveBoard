@@ -1,256 +1,366 @@
+/**
+ * SMX LiveBoard - SSH Service
+ * Gerencia conexões SSH e execução de comandos remotos
+ */
+
 const { Client } = require('ssh2');
-const EventEmitter = require('events');
+const fs = require('fs');
+const path = require('path');
+const logger = require('../utils/logger');
 
-class SSHService extends EventEmitter {
-  constructor() {
-    super();
-    this.connections = new Map();
-    this.connectionHistory = [];
-  }
+class SSHService {
+    constructor() {
+        this.connections = new Map();
+        this.activeConnections = new Set();
+    }
 
-  // Conectar via SSH
-  async connect(connectionConfig) {
-    return new Promise((resolve, reject) => {
-      const connectionId = this.generateConnectionId();
-      const client = new Client();
+    /**
+     * Testa uma conexão SSH sem estabelecer sessão completa
+     */
+    async testConnection(connectionData) {
+        return new Promise((resolve) => {
+            const client = new Client();
+            let resolved = false;
 
-      const connection = {
-        id: connectionId,
-        config: connectionConfig,
-        client,
-        connected: false,
-        createdAt: new Date().toISOString(),
-        lastActivity: new Date().toISOString()
-      };
+            const timeout = setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    client.end();
+                    resolve({
+                        success: false,
+                        error: 'Timeout na conexão SSH'
+                    });
+                }
+            }, 10000); // 10 segundos timeout
 
-      client.on('ready', () => {
-        connection.connected = true;
-        connection.lastActivity = new Date().toISOString();
-        this.connections.set(connectionId, connection);
+            client.on('ready', () => {
+                if (!resolved) {
+                    resolved = true;
+                    clearTimeout(timeout);
+                    client.end();
+                    resolve({
+                        success: true,
+                        message: 'Conexão SSH testada com sucesso'
+                    });
+                }
+            });
+
+            client.on('error', (err) => {
+                if (!resolved) {
+                    resolved = true;
+                    clearTimeout(timeout);
+                    resolve({
+                        success: false,
+                        error: err.message
+                    });
+                }
+            });
+
+            // Configuração da conexão
+            const config = {
+                host: connectionData.host,
+                port: connectionData.port || 22,
+                username: connectionData.username,
+                password: connectionData.password,
+                readyTimeout: 10000,
+                keepaliveInterval: 30000
+            };
+
+            // Se chave privada for fornecida
+            if (connectionData.keyPath && fs.existsSync(connectionData.keyPath)) {
+                config.privateKey = fs.readFileSync(connectionData.keyPath);
+                delete config.password;
+            }
+
+            client.connect(config);
+        });
+    }
+
+    /**
+     * Estabelece uma conexão SSH completa
+     */
+    async connect(connectionData, socket) {
+        return new Promise((resolve) => {
+            const connectionId = this.generateConnectionId(connectionData);
+            
+            // Verificar se já existe uma conexão ativa
+            if (this.connections.has(connectionId)) {
+                resolve({
+                    success: false,
+                    error: 'Já existe uma conexão ativa para este host'
+                });
+                return;
+            }
+
+            const client = new Client();
+            let resolved = false;
+
+            const timeout = setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    client.end();
+                    resolve({
+                        success: false,
+                        error: 'Timeout na conexão SSH'
+                    });
+                }
+            }, 15000); // 15 segundos timeout
+
+            client.on('ready', () => {
+                if (!resolved) {
+                    resolved = true;
+                    clearTimeout(timeout);
+                    
+                    // Armazenar conexão
+                    this.connections.set(connectionId, {
+                        client,
+                        connectionData,
+                        socket,
+                        createdAt: new Date()
+                    });
+                    
+                    this.activeConnections.add(connectionId);
+
+                    logger.info(`SSH conectado: ${connectionData.username}@${connectionData.host}:${connectionData.port}`);
+
+                    // Notificar cliente sobre conexão bem-sucedida
+                    if (socket) {
+                        socket.emit('ssh-connection-status', {
+                            connected: true,
+                            status: 'Conectado',
+                            connectionId
+                        });
+                    }
+
+                    resolve({
+                        success: true,
+                        connectionId,
+                        message: 'Conectado via SSH com sucesso'
+                    });
+                }
+            });
+
+            client.on('error', (err) => {
+                if (!resolved) {
+                    resolved = true;
+                    clearTimeout(timeout);
+                    
+                    logger.error(`Erro na conexão SSH: ${err.message}`);
+                    
+                    if (socket) {
+                        socket.emit('ssh-connection-status', {
+                            connected: false,
+                            status: 'Erro na conexão',
+                            error: err.message
+                        });
+                    }
+
+                    resolve({
+                        success: false,
+                        error: err.message
+                    });
+                }
+            });
+
+            // Configuração da conexão
+            const config = {
+                host: connectionData.host,
+                port: connectionData.port || 22,
+                username: connectionData.username,
+                password: connectionData.password,
+                readyTimeout: 15000,
+                keepaliveInterval: 30000
+            };
+
+            // Se chave privada for fornecida
+            if (connectionData.keyPath && fs.existsSync(connectionData.keyPath)) {
+                config.privateKey = fs.readFileSync(connectionData.keyPath);
+                delete config.password;
+            }
+
+            client.connect(config);
+        });
+    }
+
+    /**
+     * Executa um comando SSH
+     */
+    async executeCommand(connectionId, command, socket) {
+        const connection = this.connections.get(connectionId);
         
-        this.connectionHistory.push({
-          id: connectionId,
-          host: connectionConfig.host,
-          user: connectionConfig.username,
-          status: 'connected',
-          timestamp: new Date().toISOString()
-        });
-
-        this.emit('connected', connectionId, connectionConfig);
-        resolve({ connectionId, status: 'connected' });
-      });
-
-      client.on('error', (error) => {
-        this.connectionHistory.push({
-          id: connectionId,
-          host: connectionConfig.host,
-          user: connectionConfig.username,
-          status: 'error',
-          error: error.message,
-          timestamp: new Date().toISOString()
-        });
-
-        this.emit('error', connectionId, error);
-        reject(error);
-      });
-
-      client.on('close', () => {
-        connection.connected = false;
-        this.connections.delete(connectionId);
-        this.emit('disconnected', connectionId);
-      });
-
-      // Conectar
-      client.connect({
-        host: connectionConfig.host,
-        port: connectionConfig.port || 22,
-        username: connectionConfig.username,
-        password: connectionConfig.password,
-        privateKey: connectionConfig.privateKey,
-        readyTimeout: 20000,
-        keepaliveInterval: 30000
-      });
-    });
-  }
-
-  // Executar comando via SSH
-  async executeCommand(connectionId, command) {
-    const connection = this.connections.get(connectionId);
-    if (!connection || !connection.connected) {
-      throw new Error('Conexão SSH não encontrada ou desconectada');
-    }
-
-    return new Promise((resolve, reject) => {
-      connection.client.exec(command, (error, stream) => {
-        if (error) {
-          reject(error);
-          return;
+        if (!connection) {
+            if (socket) {
+                socket.emit('ssh-error', {
+                    error: 'Conexão SSH não encontrada'
+                });
+            }
+            return;
         }
 
-        let stdout = '';
-        let stderr = '';
+        return new Promise((resolve) => {
+            connection.client.exec(command, (err, stream) => {
+                if (err) {
+                    logger.error(`Erro ao executar comando SSH: ${err.message}`);
+                    
+                    if (socket) {
+                        socket.emit('ssh-error', {
+                            error: err.message
+                        });
+                    }
+                    
+                    resolve({
+                        success: false,
+                        error: err.message
+                    });
+                    return;
+                }
 
-        stream.on('close', (code, signal) => {
-          connection.lastActivity = new Date().toISOString();
-          
-          resolve({
-            connectionId,
-            command,
-            exitCode: code,
-            signal,
-            stdout: stdout.trim(),
-            stderr: stderr.trim(),
-            timestamp: new Date().toISOString()
-          });
+                let output = '';
+                let errorOutput = '';
+
+                stream.on('close', (code, signal) => {
+                    const result = {
+                        success: code === 0,
+                        output: output.trim(),
+                        error: errorOutput.trim(),
+                        exitCode: code,
+                        signal
+                    };
+
+                    if (socket) {
+                        socket.emit('ssh-output', {
+                            output: result.output || result.error,
+                            exitCode: code
+                        });
+                    }
+
+                    resolve(result);
+                });
+
+                stream.on('data', (data) => {
+                    output += data.toString();
+                });
+
+                stream.stderr.on('data', (data) => {
+                    errorOutput += data.toString();
+                });
+            });
         });
-
-        stream.on('data', (data) => {
-          stdout += data.toString();
-        });
-
-        stream.stderr.on('data', (data) => {
-          stderr += data.toString();
-        });
-      });
-    });
-  }
-
-  // Criar shell interativo
-  createShell(connectionId) {
-    const connection = this.connections.get(connectionId);
-    if (!connection || !connection.connected) {
-      throw new Error('Conexão SSH não encontrada ou desconectada');
     }
 
-    return new Promise((resolve, reject) => {
-      connection.client.shell((error, stream) => {
-        if (error) {
-          reject(error);
-          return;
+    /**
+     * Desconecta uma conexão SSH
+     */
+    async disconnect(connectionId) {
+        const connection = this.connections.get(connectionId);
+        
+        if (!connection) {
+            return {
+                success: false,
+                error: 'Conexão SSH não encontrada'
+            };
         }
 
-        const shellId = this.generateShellId();
-        const shell = {
-          id: shellId,
-          connectionId,
-          stream,
-          createdAt: new Date().toISOString(),
-          lastActivity: new Date().toISOString()
-        };
+        try {
+            connection.client.end();
+            this.connections.delete(connectionId);
+            this.activeConnections.delete(connectionId);
+            
+            logger.info(`SSH desconectado: ${connection.connectionData.username}@${connection.connectionData.host}:${connection.connectionData.port}`);
 
-        connection.shells = connection.shells || new Map();
-        connection.shells.set(shellId, shell);
-
-        // Eventos do shell
-        stream.on('close', () => {
-          connection.shells.delete(shellId);
-        });
-
-        resolve(shell);
-      });
-    });
-  }
-
-  // Enviar dados para shell
-  sendToShell(connectionId, shellId, data) {
-    const connection = this.connections.get(connectionId);
-    if (!connection || !connection.connected) {
-      throw new Error('Conexão SSH não encontrada');
+            return {
+                success: true,
+                message: 'Desconectado com sucesso'
+            };
+        } catch (error) {
+            logger.error(`Erro ao desconectar SSH: ${error.message}`);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
     }
 
-    const shell = connection.shells?.get(shellId);
-    if (!shell) {
-      throw new Error('Shell não encontrado');
+    /**
+     * Desconecta todas as conexões SSH
+     */
+    async disconnectAll() {
+        const promises = [];
+        
+        for (const [connectionId, connection] of this.connections) {
+            promises.push(this.disconnect(connectionId));
+        }
+
+        await Promise.all(promises);
+        
+        logger.info('Todas as conexões SSH foram desconectadas');
     }
 
-    shell.stream.write(data);
-    shell.lastActivity = new Date().toISOString();
-    connection.lastActivity = new Date().toISOString();
+    /**
+     * Lista conexões ativas
+     */
+    getActiveConnections() {
+        const connections = [];
+        
+        for (const [connectionId, connection] of this.connections) {
+            connections.push({
+                connectionId,
+                host: connection.connectionData.host,
+                port: connection.connectionData.port,
+                username: connection.connectionData.username,
+                createdAt: connection.createdAt
+            });
+        }
 
-    return {
-      connectionId,
-      shellId,
-      data,
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  // Desconectar
-  disconnect(connectionId) {
-    const connection = this.connections.get(connectionId);
-    if (connection) {
-      connection.client.end();
-      this.connections.delete(connectionId);
-      
-      this.connectionHistory.push({
-        id: connectionId,
-        host: connection.config.host,
-        user: connection.config.username,
-        status: 'disconnected',
-        timestamp: new Date().toISOString()
-      });
-
-      return { success: true, connectionId };
-    }
-    return { success: false, error: 'Conexão não encontrada' };
-  }
-
-  // Listar conexões ativas
-  getActiveConnections() {
-    return Array.from(this.connections.values()).map(conn => ({
-      id: conn.id,
-      host: conn.config.host,
-      user: conn.config.username,
-      connected: conn.connected,
-      createdAt: conn.createdAt,
-      lastActivity: conn.lastActivity,
-      shellsCount: conn.shells ? conn.shells.size : 0
-    }));
-  }
-
-  // Obter histórico de conexões
-  getConnectionHistory(limit = 50) {
-    return this.connectionHistory.slice(-limit);
-  }
-
-  // Gerar ID único para conexão
-  generateConnectionId() {
-    return 'ssh_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-  }
-
-  // Gerar ID único para shell
-  generateShellId() {
-    return 'shell_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-  }
-
-  // Validar configuração de conexão
-  validateConnectionConfig(config) {
-    const required = ['host', 'username'];
-    const missing = required.filter(field => !config[field]);
-    
-    if (missing.length > 0) {
-      throw new Error(`Campos obrigatórios: ${missing.join(', ')}`);
+        return connections;
     }
 
-    if (!config.password && !config.privateKey) {
-      throw new Error('Senha ou chave privada é obrigatória');
+    /**
+     * Gera um ID único para a conexão
+     */
+    generateConnectionId(connectionData) {
+        return `${connectionData.username}@${connectionData.host}:${connectionData.port}`;
     }
 
-    return true;
-  }
-
-  // Limpar conexões inativas
-  cleanupInactiveConnections() {
-    const now = Date.now();
-    const timeout = 30 * 60 * 1000; // 30 minutos
-
-    for (const [id, connection] of this.connections) {
-      const lastActivity = new Date(connection.lastActivity).getTime();
-      if (now - lastActivity > timeout) {
-        this.disconnect(id);
-      }
+    /**
+     * Verifica se uma conexão está ativa
+     */
+    isConnectionActive(connectionId) {
+        return this.connections.has(connectionId);
     }
-  }
+
+    /**
+     * Limpa conexões inativas
+     */
+    cleanupInactiveConnections() {
+        const now = new Date();
+        const maxAge = 30 * 60 * 1000; // 30 minutos
+
+        for (const [connectionId, connection] of this.connections) {
+            const age = now - connection.createdAt;
+            
+            if (age > maxAge) {
+                logger.info(`Limpando conexão SSH inativa: ${connectionId}`);
+                this.disconnect(connectionId);
+            }
+        }
+    }
+
+    /**
+     * Inicia limpeza automática de conexões
+     */
+    startCleanupInterval() {
+        // Limpar conexões inativas a cada 10 minutos
+        setInterval(() => {
+            this.cleanupInactiveConnections();
+        }, 10 * 60 * 1000);
+    }
 }
 
-module.exports = SSHService;
+// Instância singleton
+const sshService = new SSHService();
+
+// Iniciar limpeza automática
+sshService.startCleanupInterval();
+
+module.exports = sshService;

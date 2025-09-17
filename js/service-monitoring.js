@@ -17,40 +17,61 @@ class ServiceMonitoring {
 
     setupEventListeners() {
         // Botão para adicionar serviço
-        document.getElementById('addServiceBtn').addEventListener('click', () => {
-            this.showAddServiceModal();
-        });
+        const addServiceBtn = document.getElementById('addServiceBtn');
+        if (addServiceBtn) {
+            addServiceBtn.addEventListener('click', () => {
+                this.showAddServiceModal();
+            });
+        }
 
 
         // Modal de adicionar serviço
-        document.getElementById('closeModal').addEventListener('click', () => {
-            this.hideAddServiceModal();
-        });
+        const closeModal = document.getElementById('closeModal');
+        if (closeModal) {
+            closeModal.addEventListener('click', () => {
+                this.hideAddServiceModal();
+            });
+        }
 
-        document.getElementById('cancelAddService').addEventListener('click', () => {
-            this.hideAddServiceModal();
-        });
+        const cancelAddService = document.getElementById('cancelAddService');
+        if (cancelAddService) {
+            cancelAddService.addEventListener('click', () => {
+                this.hideAddServiceModal();
+            });
+        }
 
-        document.getElementById('saveService').addEventListener('click', () => {
-            this.saveNewService();
-        });
+        const saveService = document.getElementById('saveService');
+        if (saveService) {
+            saveService.addEventListener('click', () => {
+                this.saveNewService();
+            });
+        }
 
         // Mudança de tipo de serviço
-        document.getElementById('serviceType').addEventListener('change', (e) => {
-            this.toggleServiceTypeFields(e.target.value);
-        });
+        const serviceType = document.getElementById('serviceType');
+        if (serviceType) {
+            serviceType.addEventListener('change', (e) => {
+                this.toggleServiceTypeFields(e.target.value);
+            });
+        }
 
         // Botão de refresh
-        document.getElementById('refreshServicesBtn').addEventListener('click', () => {
-            this.refreshAllServices();
-        });
+        const refreshServicesBtn = document.getElementById('refreshServicesBtn');
+        if (refreshServicesBtn) {
+            refreshServicesBtn.addEventListener('click', () => {
+                this.refreshAllServices();
+            });
+        }
 
         // Fechar modal clicando fora
-        document.getElementById('addServiceModal').addEventListener('click', (e) => {
-            if (e.target.id === 'addServiceModal') {
-                this.hideAddServiceModal();
-            }
-        });
+        const addServiceModal = document.getElementById('addServiceModal');
+        if (addServiceModal) {
+            addServiceModal.addEventListener('click', (e) => {
+                if (e.target.id === 'addServiceModal') {
+                    this.hideAddServiceModal();
+                }
+            });
+        }
     }
 
     initializeServiceCharts() {

@@ -1,649 +1,311 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const morgan = require('morgan');
+// SMX LiveBoard - Electron Entry Point
+// Este arquivo é o ponto de entrada para o Electron
+
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
-require('dotenv').config({ path: './config.env' });
+const { spawn } = require('child_process');
+const isDev = process.env.NODE_ENV === 'development';
 
-// Importar serviços com tratamento de erro
-let SystemMetricsService, ProcessMonitoringService, ServiceMonitoringService, TerminalService;
-let SSHService, LogsService, TelegramService;
+// Variável para armazenar o processo do servidor backend
+let backendProcess = null;
 
-try {
-    // Serviços básicos
-    SystemMetricsService = require('./backend/services/systemMetricsService');
-    ProcessMonitoringService = require('./backend/services/processMonitoringService');
-    ServiceMonitoringService = require('./backend/services/serviceMonitoringService');
-    TerminalService = require('./backend/services/terminalService');
+// Manter uma referência global das janelas
+let mainWindow;
+let splashWindow;
+
+// Função para iniciar o servidor backend
+function startBackendServer() {
+  return new Promise((resolve, reject) => {
+    const backendPath = path.join(__dirname, 'backend', 'index.js');
     
-    // Serviços avançados
-    SSHService = require('./backend/services/sshService');
-    LogsService = require('./backend/services/logsService');
-    TelegramService = require('./backend/services/telegramService');
-} catch (error) {
-    console.error('Erro ao carregar serviços:', error.message);
-    process.exit(1);
+    // Iniciar o servidor backend
+    backendProcess = spawn('node', [backendPath], {
+      cwd: __dirname,
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
+    backendProcess.stdout.on('data', (data) => {
+      console.log(`Backend: ${data}`);
+      // Verificar se o servidor está pronto
+      if (data.toString().includes('SMX LiveBoard rodando na porta')) {
+        resolve();
+      }
+    });
+
+    backendProcess.stderr.on('data', (data) => {
+      console.error(`Backend Error: ${data}`);
+    });
+
+    backendProcess.on('error', (error) => {
+      console.error('Erro ao iniciar backend:', error);
+      reject(error);
+    });
+
+    // Timeout de segurança
+    setTimeout(() => {
+      resolve(); // Continuar mesmo se não detectar a mensagem
+    }, 5000);
+  });
 }
 
-class SMXLiveBoardServer {
-    constructor() {
-        this.app = express();
-        this.server = http.createServer(this.app);
-        this.io = socketIo(this.server, {
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST"]
-            }
-        });
-        
-        this.port = process.env.PORT || 3000;
-        this.isProduction = process.env.NODE_ENV === 'production';
-        
-        // Controle de intervalos
-        this.intervals = {
-            metrics: null,
-            processes: null,
-            services: null
-        };
-        
-        // Inicializar serviços com tratamento de erro
-        try {
-            // Serviços básicos
-            this.systemMetrics = new SystemMetricsService();
-            this.processMonitoring = new ProcessMonitoringService();
-            this.serviceMonitoring = new ServiceMonitoringService();
-            this.terminalService = new TerminalService();
-            
-            // Serviços avançados
-            this.sshService = new SSHService();
-            this.logsService = new LogsService();
-            this.telegramService = new TelegramService();
-            
-            console.log('✅ Todos os serviços inicializados com sucesso');
-        } catch (error) {
-            console.error('❌ Erro ao inicializar serviços:', error.message);
-            throw error;
+function createSplashWindow() {
+  // Criar janela de splash screen
+  splashWindow = new BrowserWindow({
+    width: 500,
+    height: 400,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      preload: path.join(__dirname, 'electron', 'preload.js')
+    },
+    icon: path.join(__dirname, 'assets', 'icon.png'),
+    backgroundColor: '#0f0f0f',
+    show: false
+  });
+
+  // Carregar splash screen
+  splashWindow.loadFile(path.join(__dirname, 'electron', 'splash.html'));
+  
+  // Mostrar splash screen quando estiver pronto
+  splashWindow.once('ready-to-show', () => {
+    splashWindow.show();
+  });
+
+  // Centralizar splash screen
+  splashWindow.center();
+}
+
+function createWindow() {
+  // Criar a janela principal
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1200,
+    minHeight: 800,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      preload: path.join(__dirname, 'electron', 'preload.js')
+    },
+    icon: path.join(__dirname, 'assets', 'icon.png'),
+    titleBarStyle: 'default',
+    show: false, // Não mostrar até estar pronto
+    backgroundColor: '#0f0f0f'
+  });
+
+  // Carregar o aplicativo - sempre começar com arquivo local
+  const localUrl = `file://${path.join(__dirname, 'index.html')}`;
+  console.log('Carregando arquivo HTML local:', localUrl);
+  mainWindow.loadURL(localUrl);
+
+  // Mostrar a janela quando estiver pronta
+  mainWindow.once('ready-to-show', () => {
+    console.log('Janela principal pronta para mostrar');
+    
+    // Fechar splash screen e mostrar janela principal
+    if (splashWindow) {
+      splashWindow.close();
+      splashWindow = null;
+    }
+    mainWindow.show();
+    
+    // Sempre abrir DevTools para debug
+    mainWindow.webContents.openDevTools();
+    
+    console.log('Janela principal exibida com sucesso');
+  });
+  
+  // Adicionar logs de erro
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error('Erro ao carregar:', errorDescription, 'URL:', validatedURL);
+  });
+
+  // Fechar a janela quando clicar no X
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
+  // Configurar menu da aplicação
+  createMenu();
+}
+
+function createMenu() {
+  const template = [
+    {
+      label: 'SMX LiveBoard',
+      submenu: [
+        {
+          label: 'Sobre SMX LiveBoard',
+          click: () => {
+            // Implementar janela sobre
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Sair',
+          accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
+          click: () => {
+            app.quit();
+          }
         }
-        
-        this.setupMiddleware();
-        this.setupRoutes();
-        this.setupSocketIO();
-        this.startDataCollection();
-    }
-
-    setupMiddleware() {
-        // Segurança
-        this.app.use(helmet({
-            contentSecurityPolicy: false // Desabilitado para desenvolvimento
-        }));
-        
-        // Compressão
-        this.app.use(compression());
-        
-        // Logs
-        this.app.use(morgan(this.isProduction ? 'combined' : 'dev'));
-        
-        // CORS
-        this.app.use(cors());
-        
-        // Parser JSON
-        this.app.use(express.json({ limit: '10mb' }));
-        this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-        
-        // Arquivos estáticos
-        this.app.use(express.static(path.join(__dirname, 'public')));
-        this.app.use('/assets', express.static(path.join(__dirname, 'assets')));
-        this.app.use('/js', express.static(path.join(__dirname, 'js')));
-        this.app.use('/styles', express.static(path.join(__dirname, 'styles')));
-    }
-
-    setupRoutes() {
-        // Rota principal
-        this.app.get('/', (req, res) => {
-            res.sendFile(path.join(__dirname, 'index.html'));
-        });
-
-        // API Routes
-        this.app.get('/api/system/info', async (req, res) => {
-            try {
-                const systemInfo = await this.systemMetrics.getSystemInfo();
-                res.json(systemInfo);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
+      ]
+    },
+    {
+      label: 'Visualizar',
+      submenu: [
+        {
+          label: 'Recarregar',
+          accelerator: 'CmdOrCtrl+R',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) focusedWindow.reload();
+          }
+        },
+        {
+          label: 'Alternar Tela Cheia',
+          accelerator: process.platform === 'darwin' ? 'Ctrl+Command+F' : 'F11',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) {
+              focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
             }
-        });
-
-        this.app.get('/api/system/metrics', async (req, res) => {
-            try {
-                const metrics = await this.systemMetrics.getAllMetrics();
-                res.json(metrics);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.get('/api/processes', async (req, res) => {
-            try {
-                const processes = await this.processMonitoring.getTopProcesses();
-                res.json(processes);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.get('/api/services', (req, res) => {
-            try {
-                const services = this.serviceMonitoring.getAllServices();
-                res.json(services);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.post('/api/services', (req, res) => {
-            try {
-                const newService = this.serviceMonitoring.addService(req.body);
-                res.json(newService);
-            } catch (error) {
-                res.status(400).json({ error: error.message });
-            }
-        });
-
-        this.app.delete('/api/services/:id', (req, res) => {
-            try {
-                const result = this.serviceMonitoring.removeService(req.params.id);
-                res.json(result);
-            } catch (error) {
-                res.status(404).json({ error: error.message });
-            }
-        });
-
-        // Terminal API
-        this.app.post('/api/terminal/execute', async (req, res) => {
-            try {
-                const { command } = req.body;
-                
-                // Validação de entrada
-                if (!command || typeof command !== 'string') {
-                    return res.status(400).json({ error: 'Comando é obrigatório' });
-                }
-                
-                // Verificar se comando é seguro
-                if (!this.terminalService.isCommandSafe(command)) {
-                    return res.status(400).json({ error: 'Comando não permitido por segurança' });
-                }
-                
-                const result = await this.terminalService.executeCommand(command);
-                res.json(result);
-            } catch (error) {
-                console.error('Erro ao executar comando:', error);
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        // Health check
-        this.app.get('/api/health', (req, res) => {
-            res.json({ 
-                status: 'OK', 
-                timestamp: new Date().toISOString(),
-                uptime: process.uptime(),
-                memory: process.memoryUsage()
-            });
-        });
-
-        // ===== ROTAS SSH =====
-        this.app.post('/api/ssh/connect', async (req, res) => {
-            try {
-                const connectionConfig = req.body;
-                
-                this.sshService.validateConnectionConfig(connectionConfig);
-                const result = await this.sshService.connect(connectionConfig);
-                
-                await this.logsService.info(`Conexão SSH estabelecida: ${connectionConfig.host}`, 'SSH', {
-                    host: connectionConfig.host,
-                    user: connectionConfig.username
-                });
-
-                res.json(result);
-            } catch (error) {
-                await this.logsService.error(`Erro na conexão SSH: ${error.message}`, 'SSH');
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.post('/api/ssh/:connectionId/execute', async (req, res) => {
-            try {
-                const { connectionId } = req.params;
-                const { command } = req.body;
-                
-                if (!command) {
-                    return res.status(400).json({ error: 'Comando é obrigatório' });
-                }
-
-                const result = await this.sshService.executeCommand(connectionId, command);
-                
-                await this.logsService.info(`Comando SSH executado: ${command}`, 'SSH', {
-                    connectionId,
-                    exitCode: result.exitCode
-                });
-
-                res.json(result);
-            } catch (error) {
-                await this.logsService.error(`Erro ao executar comando SSH: ${error.message}`, 'SSH');
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.get('/api/ssh/connections', (req, res) => {
-            try {
-                const connections = this.sshService.getActiveConnections();
-                res.json(connections);
-            } catch (error) {
-                res.status(500).json({ error: 'Erro ao obter conexões' });
-            }
-        });
-
-        this.app.delete('/api/ssh/:connectionId', (req, res) => {
-            try {
-                const { connectionId } = req.params;
-                const result = this.sshService.disconnect(connectionId);
-                
-                if (result.success) {
-                    this.logsService.info(`Conexão SSH desconectada: ${connectionId}`, 'SSH');
-                }
-                
-                res.json(result);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        // ===== ROTAS DE LOGS =====
-        this.app.get('/api/logs', async (req, res) => {
-            try {
-                const options = {
-                    level: req.query.level,
-                    source: req.query.source,
-                    startDate: req.query.startDate,
-                    endDate: req.query.endDate,
-                    search: req.query.search,
-                    limit: parseInt(req.query.limit) || 100,
-                    offset: parseInt(req.query.offset) || 0
-                };
-
-                const result = this.logsService.getLogs(options);
-                res.json(result);
-            } catch (error) {
-                res.status(500).json({ error: 'Erro ao obter logs' });
-            }
-        });
-
-        this.app.get('/api/logs/stats', (req, res) => {
-            try {
-                const stats = this.logsService.getLogStats();
-                res.json(stats);
-            } catch (error) {
-                res.status(500).json({ error: 'Erro ao obter estatísticas' });
-            }
-        });
-
-        this.app.post('/api/logs/clear', async (req, res) => {
-            try {
-                const { daysToKeep } = req.body;
-                const result = await this.logsService.clearOldLogs(daysToKeep || 30);
-                res.json(result);
-            } catch (error) {
-                res.status(500).json({ error: 'Erro ao limpar logs' });
-            }
-        });
-
-        // ===== ROTAS TELEGRAM =====
-        this.app.post('/api/telegram/configure', (req, res) => {
-            try {
-                const { botToken, chatId } = req.body;
-                
-                if (!botToken || !chatId) {
-                    return res.status(400).json({ error: 'Bot token e chat ID são obrigatórios' });
-                }
-
-                const result = this.telegramService.configure(botToken, chatId);
-                
-                this.logsService.info('Bot do Telegram configurado', 'TELEGRAM', {
-                    chatId,
-                    hasToken: !!botToken
-                });
-
-                res.json(result);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.post('/api/telegram/send', async (req, res) => {
-            try {
-                const { message, options = {} } = req.body;
-                
-                if (!message) {
-                    return res.status(400).json({ error: 'Mensagem é obrigatória' });
-                }
-
-                const result = await this.telegramService.sendMessage(message, options);
-                
-                this.logsService.info('Mensagem enviada via Telegram', 'TELEGRAM', {
-                    messageLength: message.length,
-                    hasOptions: Object.keys(options).length > 0
-                });
-
-                res.json(result);
-            } catch (error) {
-                this.logsService.error(`Erro ao enviar mensagem Telegram: ${error.message}`, 'TELEGRAM');
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.post('/api/telegram/alert', async (req, res) => {
-            try {
-                const { alertType, data, severity = 'INFO' } = req.body;
-                
-                if (!alertType || !data) {
-                    return res.status(400).json({ error: 'Tipo de alerta e dados são obrigatórios' });
-                }
-
-                const result = await this.telegramService.sendSystemAlert(alertType, data, severity);
-                
-                this.logsService.info(`Alerta enviado via Telegram: ${alertType}`, 'TELEGRAM', {
-                    alertType,
-                    severity
-                });
-
-                res.json(result);
-            } catch (error) {
-                this.logsService.error(`Erro ao enviar alerta Telegram: ${error.message}`, 'TELEGRAM');
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.get('/api/telegram/test', async (req, res) => {
-            try {
-                const result = await this.telegramService.testConnection();
-                res.json(result);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.get('/api/telegram/status', (req, res) => {
-            try {
-                const isConfigured = this.telegramService.isBotConfigured();
-                const history = this.telegramService.getMessageHistory(10);
-                
-                res.json({
-                    configured: isConfigured,
-                    recentMessages: history.length
-                });
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-        });
-    }
-
-    setupSocketIO() {
-        this.io.on('connection', (socket) => {
-            console.log(`Cliente conectado: ${socket.id}`);
-
-            // Enviar dados iniciais
-            this.sendInitialData(socket);
-
-            // Terminal interativo
-            socket.on('terminal:command', async (data) => {
-                try {
-                    const result = await this.terminalService.executeCommand(data.command);
-                    socket.emit('terminal:response', result);
-                } catch (error) {
-                    socket.emit('terminal:error', { error: error.message });
-                }
-            });
-
-            // Adicionar serviço
-            socket.on('service:add', (serviceData) => {
-                try {
-                    const service = this.serviceMonitoring.addService(serviceData);
-                    this.io.emit('service:added', service);
-                } catch (error) {
-                    socket.emit('service:error', { error: error.message });
-                }
-            });
-
-            // Remover serviço
-            socket.on('service:remove', (serviceId) => {
-                try {
-                    this.serviceMonitoring.removeService(serviceId);
-                    this.io.emit('service:removed', { id: serviceId });
-                } catch (error) {
-                    socket.emit('service:error', { error: error.message });
-                }
-            });
-
-            // SSH events
-            socket.on('ssh:connect', async (connectionConfig) => {
-                try {
-                    const result = await this.sshService.connect(connectionConfig);
-                    socket.emit('ssh:connected', result);
-                } catch (error) {
-                    socket.emit('ssh:error', { error: error.message });
-                }
-            });
-
-            socket.on('ssh:execute', async (data) => {
-                try {
-                    const { connectionId, command } = data;
-                    const result = await this.sshService.executeCommand(connectionId, command);
-                    socket.emit('ssh:response', result);
-                } catch (error) {
-                    socket.emit('ssh:error', { error: error.message });
-                }
-            });
-
-            // Telegram events
-            socket.on('telegram:configure', (config) => {
-                try {
-                    const result = this.telegramService.configure(config.botToken, config.chatId);
-                    socket.emit('telegram:configured', result);
-                } catch (error) {
-                    socket.emit('telegram:error', { error: error.message });
-                }
-            });
-
-            socket.on('telegram:send', async (data) => {
-                try {
-                    const result = await this.telegramService.sendMessage(data.message, data.options);
-                    socket.emit('telegram:sent', result);
-                } catch (error) {
-                    socket.emit('telegram:error', { error: error.message });
-                }
-            });
-
-            socket.on('disconnect', () => {
-                console.log(`Cliente desconectado: ${socket.id}`);
-            });
-        });
-    }
-
-    async sendInitialData(socket) {
-        try {
-            // Coletar dados essenciais primeiro
-            const systemInfo = await this.systemMetrics.getSystemInfo();
-            
-            // Coletar dados adicionais de forma assíncrona
-            try {
-                const [processes, services] = await Promise.all([
-                    this.processMonitoring.getTopProcesses(),
-                    Promise.resolve(this.serviceMonitoring.getAllServices())
-                ]);
-                
-                socket.emit('initial:data', {
-                    systemInfo,
-                    processes,
-                    services
-                });
-            } catch (error) {
-                console.warn('Erro ao coletar dados adicionais:', error.message);
-                // Enviar apenas dados essenciais
-                socket.emit('initial:data', {
-                    systemInfo,
-                    processes: { processes: [], totalCpu: 0, totalMemory: 0, totalProcesses: 0 },
-                    services: []
-                });
-            }
-        } catch (error) {
-            console.error('Erro ao enviar dados iniciais:', error.message);
-            socket.emit('initial:error', { error: error.message });
+          }
+        },
+        {
+          label: 'Alternar Ferramentas do Desenvolvedor',
+          accelerator: process.platform === 'darwin' ? 'Alt+Cmd+I' : 'Ctrl+Shift+I',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) focusedWindow.toggleDevTools();
+          }
         }
-    }
-
-    startDataCollection() {
-        // Limpar intervalos existentes
-        this.stopDataCollection();
-        
-        // Coletar métricas do sistema a cada 3 segundos
-        this.intervals.metrics = setInterval(async () => {
-            try {
-                const metrics = await this.systemMetrics.getAllMetrics();
-                this.io.emit('system:metrics', metrics);
-            } catch (error) {
-                console.error('Erro ao coletar métricas:', error);
-            }
-        }, 3000);
-
-        // Coletar processos a cada 10 segundos
-        this.intervals.processes = setInterval(async () => {
-            try {
-                const processes = await this.processMonitoring.getTopProcesses();
-                this.io.emit('processes:update', processes);
-            } catch (error) {
-                console.error('Erro ao coletar processos:', error);
-            }
-        }, 10000);
-
-        // Verificar serviços a cada 60 segundos
-        this.intervals.services = setInterval(() => {
-            try {
-                const services = this.serviceMonitoring.getAllServices();
-                this.io.emit('services:update', services);
-            } catch (error) {
-                console.error('Erro ao verificar serviços:', error);
-            }
-        }, 60000);
-        
-        console.log('✅ Coleta de dados iniciada');
-    }
-    
-    stopDataCollection() {
-        // Parar todos os intervalos
-        Object.values(this.intervals).forEach(interval => {
-            if (interval) {
-                clearInterval(interval);
-            }
-        });
-        
-        // Resetar referências
-        this.intervals = {
-            metrics: null,
-            processes: null,
-            services: null
-        };
-        
-        console.log('🛑 Coleta de dados parada');
-    }
-
-    start() {
-        this.server.listen(this.port, () => {
-            console.log(`🚀 SMX LiveBoard rodando na porta ${this.port}`);
-            console.log(`📊 Dashboard: http://localhost:${this.port}`);
-            console.log(`🔧 API: http://localhost:${this.port}/api/health`);
-            console.log(`⚡ Socket.IO: ws://localhost:${this.port}`);
-            console.log(`📋 Serviços disponíveis:`);
-            console.log(`   • Sistema: Métricas, Processos, Serviços`);
-            console.log(`   • Terminal: Execução de comandos`);
-            console.log(`   • SSH: Conexões remotas`);
-            console.log(`   • Logs: Sistema de logs completo`);
-            console.log(`   • Telegram: Alertas e notificações`);
-        });
-    }
-}
-
-// Inicializar servidor com tratamento de erro
-let server;
-try {
-    server = new SMXLiveBoardServer();
-    server.start();
-} catch (error) {
-    console.error('❌ Erro fatal ao inicializar servidor:', error.message);
-    console.error('Stack trace:', error.stack);
-    process.exit(1);
-}
-
-// Graceful shutdown
-let isShuttingDown = false;
-
-function gracefulShutdown(signal) {
-    if (isShuttingDown) {
-        console.log('🛑 Forçando encerramento...');
-        process.exit(1);
-        return;
-    }
-    
-    isShuttingDown = true;
-    console.log(`🛑 Recebido ${signal}, encerrando servidor...`);
-    
-    if (server) {
-        try {
-            // Parar coleta de dados
-            server.stopDataCollection();
-            
-            // Fechar Socket.IO
-            if (server.io) {
-                server.io.close();
-            }
-            
-            // Fechar servidor HTTP
-            if (server.server) {
-                server.server.close(() => {
-                    console.log('✅ Servidor encerrado com sucesso');
-                    process.exit(0);
-                });
-                
-                // Timeout de segurança - forçar encerramento após 5 segundos
-                setTimeout(() => {
-                    console.log('⚠️ Timeout no encerramento - forçando saída');
-                    process.exit(1);
-                }, 5000);
-            } else {
-                process.exit(0);
-            }
-        } catch (error) {
-            console.error('❌ Erro durante encerramento:', error.message);
-            process.exit(1);
+      ]
+    },
+    {
+      label: 'Janela',
+      submenu: [
+        {
+          label: 'Minimizar',
+          accelerator: 'CmdOrCtrl+M',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) focusedWindow.minimize();
+          }
+        },
+        {
+          label: 'Fechar',
+          accelerator: 'CmdOrCtrl+W',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) focusedWindow.close();
+          }
         }
-    } else {
-        process.exit(0);
+      ]
     }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-// Tratar erros não capturados
-process.on('uncaughtException', (error) => {
-    console.error('❌ Erro não capturado:', error.message);
-    console.error('Stack trace:', error.stack);
-    process.exit(1);
+// Este método será chamado quando o Electron terminar de inicializar
+app.whenReady().then(async () => {
+  console.log('Electron app ready - iniciando processo...');
+  
+  // 1. Criar splash screen primeiro
+  console.log('1. Criando splash screen...');
+  createSplashWindow();
+  
+  // 2. Criar janela principal após 2 segundos (carregar HTML/CSS)
+  setTimeout(() => {
+    console.log('2. Criando janela principal (HTML/CSS)...');
+    createWindow();
+  }, 2000);
+  
+  // 3. Iniciar servidor backend após 4 segundos (depois do frontend)
+  setTimeout(async () => {
+    try {
+      console.log('3. Iniciando servidor backend...');
+      await startBackendServer();
+      console.log('Servidor backend iniciado com sucesso!');
+      
+      // 4. Reconectar a janela ao servidor quando estiver pronto
+      if (mainWindow) {
+        console.log('4. Reconectando ao servidor backend...');
+        mainWindow.loadURL('http://localhost:3000');
+      }
+    } catch (error) {
+      console.error('Erro ao iniciar servidor backend:', error);
+    }
+  }, 4000);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Promise rejeitada não tratada:', reason);
-    process.exit(1);
+// Função para encerrar o servidor backend
+function stopBackendServer() {
+  if (backendProcess) {
+    console.log('Encerrando servidor backend...');
+    backendProcess.kill('SIGTERM');
+    backendProcess = null;
+  }
+}
+
+// Sair quando todas as janelas estiverem fechadas
+app.on('window-all-closed', () => {
+  // Encerrar o servidor backend
+  stopBackendServer();
+  
+  // No macOS, é comum que aplicativos e suas barras de menu
+  // permaneçam ativos até que o usuário saia explicitamente com Cmd + Q
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  // No macOS, é comum recriar uma janela no app quando o
+  // ícone do dock é clicado e não há outras janelas abertas
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+
+// IPC Handlers para comunicação com o frontend
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
+ipcMain.handle('get-system-info', async () => {
+  // Aqui você pode adicionar lógica para obter informações do sistema
+  // diretamente do Electron se necessário
+  return {
+    platform: process.platform,
+    arch: process.arch,
+    version: process.version
+  };
+});
+
+// Handler para splash screen
+ipcMain.on('splash-ready', () => {
+  // Splash screen está pronta, pode fechar após um delay
+  setTimeout(() => {
+    if (splashWindow) {
+      splashWindow.close();
+      splashWindow = null;
+    }
+  }, 2000);
+});
+
+// Prevenir navegação para URLs externas
+app.on('web-contents-created', (event, contents) => {
+  contents.on('new-window', (event, navigationUrl) => {
+    event.preventDefault();
+  });
+  
+  contents.on('will-navigate', (event, navigationUrl) => {
+    const parsedUrl = new URL(navigationUrl);
+    
+    if (parsedUrl.origin !== 'http://localhost:3002' && parsedUrl.origin !== 'file://') {
+      event.preventDefault();
+    }
+  });
 });
