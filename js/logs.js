@@ -111,8 +111,8 @@ class SMXLogs {
             });
         }
         
-        // Ordenar por timestamp (mais recentes primeiro)
-        this.logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        // Ordenar por timestamp (mais antigos primeiro)
+        this.logs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
         
         // Salvar no localStorage
         this.saveLogs();
@@ -579,12 +579,12 @@ class SMXLogs {
             severity: this.getSeverityLevel(level.toUpperCase())
         };
 
-        // Adicionar no início do array (logs mais recentes primeiro)
-        this.logs.unshift(newLog);
+        // Adicionar no final do array (logs mais recentes no final)
+        this.logs.push(newLog);
         
         // Manter apenas os últimos 1000 logs
         if (this.logs.length > 1000) {
-            this.logs = this.logs.slice(0, 1000);
+            this.logs = this.logs.slice(-1000);
         }
 
         // Salvar no localStorage

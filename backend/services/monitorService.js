@@ -3,112 +3,118 @@ const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
+const logger = require('../utils/logger');
 
 class MonitorService {
-  constructor() {
-    this.data = {};
-    this.isCollecting = false;
-    this.cache = {
-      // Cache de dados básicos (rápido)
-      basicInfo: null,
-      lastBasicUpdate: 0,
-      basicTtl: 30000, // 30 segundos
-      
-      // Cache de dados completos
-      fullInfo: null,
-      lastFullUpdate: 0,
-      fullTtl: 10000, // 10 segundos (aumentado para evitar gargalos)
-      
-      // Cache de dados estáticos (raramente mudam)
-      staticInfo: null,
-      lastStaticUpdate: 0,
-      staticTtl: 300000, // 5 minutos
-      
-      // Cache de dados de sistema (mudam ocasionalmente)
-      systemInfo: null,
-      lastSystemUpdate: 0,
-      systemTtl: 60000, // 1 minuto
-      
-      // Cache de dados de rede (mudam ocasionalmente)
-      networkInfo: null,
-      lastNetworkUpdate: 0,
-      networkTtl: 30000, // 30 segundos
-      
-      // Cache de dados de disco (mudam ocasionalmente)
-      diskInfo: null,
-      lastDiskUpdate: 0,
-      diskTtl: 60000, // 1 minuto
-      
-      // Cache de dados de processos (mudam frequentemente, mas coletamos com menos frequência)
-      processesInfo: null,
-      lastProcessesUpdate: 0,
-      processesTtl: 15000 // 15 segundos (mais longo para evitar gargalos)
-    };
-    
-    // Métricas de performance do próprio sistema
-    this.performanceMetrics = {
-      collectionTimes: {
-        basicInfo: [],
-        fullInfo: [],
-        processes: [],
-        staticInfo: []
-      },
-      errorCounts: {
-        total: 0,
-        byType: {}
-      },
-      cacheHitRates: {
-        basicInfo: { hits: 0, misses: 0 },
-        fullInfo: { hits: 0, misses: 0 },
-        staticInfo: { hits: 0, misses: 0 },
-        systemInfo: { hits: 0, misses: 0 },
-        networkInfo: { hits: 0, misses: 0 },
-        diskInfo: { hits: 0, misses: 0 }
-      },
-      startTime: Date.now(),
-      lastReset: Date.now()
-    };
-  }
+    constructor() {
+        this.data = {};
+        this.isCollecting = false;
+        this.cache = {
+            // Cache de dados básicos (rápido)
+            basicInfo: null,
+            lastBasicUpdate: 0,
+            basicTtl: 30000, // 30 segundos (OTIMIZADO)
+            
+            // Cache de dados completos
+            fullInfo: null,
+            lastFullUpdate: 0,
+            fullTtl: 15000, // 15 segundos (OTIMIZADO)
+            
+            // Cache de dados estáticos (raramente mudam)
+            staticInfo: null,
+            lastStaticUpdate: 0,
+            staticTtl: 300000, // 5 minutos
+            
+            // Cache de dados de sistema (mudam ocasionalmente)
+            systemInfo: null,
+            lastSystemUpdate: 0,
+            systemTtl: 60000, // 1 minuto
+            
+            // Cache de dados de rede (mudam ocasionalmente)
+            networkInfo: null,
+            lastNetworkUpdate: 0,
+            networkTtl: 30000, // 30 segundos
+            
+            // Cache específico para ping (mais longo)
+            pingInfo: null,
+            lastPingUpdate: 0,
+            pingTtl: 60000, // 60 segundos (ping menos frequente)
+            
+            // Cache de dados de disco (mudam ocasionalmente)
+            diskInfo: null,
+            lastDiskUpdate: 0,
+            diskTtl: 60000, // 1 minuto
+            
+            // Cache de dados de processos (mudam frequentemente, mas coletamos com menos frequência)
+            processesInfo: null,
+            lastProcessesUpdate: 0,
+            processesTtl: 20000 // 20 segundos (OTIMIZADO)
+        };
+        
+        // Métricas de performance do próprio sistema
+        this.performanceMetrics = {
+            collectionTimes: {
+                basicInfo: [],
+                fullInfo: [],
+                processes: [],
+                staticInfo: []
+            },
+            errorCounts: {
+                total: 0,
+                byType: {}
+            },
+            cacheHitRates: {
+                basicInfo: { hits: 0, misses: 0 },
+                fullInfo: { hits: 0, misses: 0 },
+                staticInfo: { hits: 0, misses: 0 },
+                systemInfo: { hits: 0, misses: 0 },
+                networkInfo: { hits: 0, misses: 0 },
+                diskInfo: { hits: 0, misses: 0 }
+            },
+            startTime: Date.now(),
+            lastReset: Date.now()
+        };
+    }
 
-  // Métodos para rastrear performance
-  recordCollectionTime(type, duration) {
-    if (!this.performanceMetrics.collectionTimes[type]) {
-      this.performanceMetrics.collectionTimes[type] = [];
+    // Métodos para rastrear performance
+    recordCollectionTime(type, duration) {
+        if (!this.performanceMetrics.collectionTimes[type]) {
+            this.performanceMetrics.collectionTimes[type] = [];
+        }
+        
+        this.performanceMetrics.collectionTimes[type].push(duration);
+        
+        // Manter apenas os últimos 100 registros
+        if (this.performanceMetrics.collectionTimes[type].length > 100) {
+            this.performanceMetrics.collectionTimes[type].shift();
+        }
     }
-    
-    this.performanceMetrics.collectionTimes[type].push(duration);
-    
-    // Manter apenas os últimos 100 registros
-    if (this.performanceMetrics.collectionTimes[type].length > 100) {
-      this.performanceMetrics.collectionTimes[type].shift();
-    }
-  }
 
-  recordCacheHit(cacheType, isHit) {
-    if (!this.performanceMetrics.cacheHitRates[cacheType]) {
-      this.performanceMetrics.cacheHitRates[cacheType] = { hits: 0, misses: 0 };
+    recordCacheHit(cacheType, isHit) {
+        if (!this.performanceMetrics.cacheHitRates[cacheType]) {
+            this.performanceMetrics.cacheHitRates[cacheType] = { hits: 0, misses: 0 };
+        }
+        
+        if (isHit) {
+            this.performanceMetrics.cacheHitRates[cacheType].hits++;
+        } else {
+            this.performanceMetrics.cacheHitRates[cacheType].misses++;
+        }
     }
-    
-    if (isHit) {
-      this.performanceMetrics.cacheHitRates[cacheType].hits++;
-    } else {
-      this.performanceMetrics.cacheHitRates[cacheType].misses++;
-    }
-  }
 
-  recordError(errorType, error) {
-    this.performanceMetrics.errorCounts.total++;
-    
-    if (!this.performanceMetrics.errorCounts.byType[errorType]) {
-      this.performanceMetrics.errorCounts.byType[errorType] = 0;
+    recordError(errorType, error) {
+        this.performanceMetrics.errorCounts.total++;
+        
+        if (!this.performanceMetrics.errorCounts.byType[errorType]) {
+            this.performanceMetrics.errorCounts.byType[errorType] = 0;
+        }
+        this.performanceMetrics.errorCounts.byType[errorType]++;
+        
+        // Log apenas erros críticos
+        if (errorType.includes('critical') || errorType.includes('fatal')) {
+            console.error(`🚨 Erro crítico [${errorType}]:`, error.message);
+        }
     }
-    this.performanceMetrics.errorCounts.byType[errorType]++;
-    
-    // Log apenas erros críticos
-    if (errorType.includes('critical') || errorType.includes('fatal')) {
-      console.error(`🚨 Erro crítico [${errorType}]:`, error.message);
-    }
-  }
 
   // Obter estatísticas de performance
   getPerformanceStats() {
@@ -266,7 +272,7 @@ class MonitorService {
       
       this.recordCacheHit('basicInfo', false);
 
-      // Coletar apenas dados essenciais e rápidos
+      // Coletar APENAS dados essenciais e rápidos
       const [memory, staticInfo] = await Promise.all([
         si.mem(),
         this.getStaticSystemInfo() // Usar cache de dados estáticos
@@ -277,16 +283,17 @@ class MonitorService {
         cpu: {
           model: staticInfo.cpu.model,
           cores: staticInfo.cpu.cores,
-          usage: 0, // Será preenchido depois
+          usage: 0, // Será preenchido pelos dados completos
           frequency: 0,
           loadAverage: 0,
-          status: 'loading' // Indicar que está carregando
+          status: 'loading' // Loading até receber dados completos
         },
         memory: {
           total: memory.total,
           used: memory.used,
           free: memory.free,
-          usage: Math.round((memory.used / memory.total) * 100)
+          usage: Math.round((memory.used / memory.total) * 100),
+          status: memory.total ? 'ready' : 'loading'
         },
         network: {
           interface: 'loading...',
@@ -300,7 +307,7 @@ class MonitorService {
           usage: 0,
           name: 'loading...',
           type: 'loading...',
-          status: 'loading' // Indicar que está carregando
+          status: 'loading'
         },
         time: {
           uptime: os.uptime()
@@ -1091,23 +1098,49 @@ class MonitorService {
     }
   }
 
-  // Medir latência de rede usando ping do Windows
+  // Medir latência de rede usando ping do Windows (OTIMIZADO)
   async measureNetworkLatency() {
     try {
-      // Comando ping para Windows: ping -n 1 8.8.8.8
-      const command = 'ping -n 1 8.8.8.8';
-      const { stdout } = await execAsync(command);
+      // Verificar cache primeiro
+      const now = Date.now();
+      if (this.cache.pingInfo && (now - this.cache.lastPingUpdate) < this.cache.pingTtl) {
+        return this.cache.pingInfo;
+      }
       
-      // Extrair tempo de resposta do output do ping
-      // Formato típico: "Tempo = 15ms" ou "time=15ms"
-      const timeMatch = stdout.match(/tempo[=<]\s*(\d+)ms/i);
+      // Comando ping mais simples e rápido
+      const command = 'ping -n 1 -w 2000 8.8.8.8';
+      const { stdout, stderr } = await execAsync(command);
       
-      if (timeMatch && timeMatch[1]) {
-        const latency = parseInt(timeMatch[1]);
-        return latency;
-      } else {
+      // Verificar se houve erro
+      if (stderr && stderr.trim()) {
+        // Log removido - erro silencioso
         return 0;
       }
+      
+      // Extrair tempo de resposta do output do ping
+      // Formato típico: "Tempo = 15ms" ou "time=15ms" ou "time<1ms"
+      const timeMatch = stdout.match(/tempo[=<]\s*(\d+)ms/i);
+      const timeLessMatch = stdout.match(/tempo[=<]\s*<1ms/i);
+      
+      let latency = 0;
+      
+      if (timeLessMatch) {
+        latency = 1; // Menos de 1ms, retornar 1ms
+      } else if (timeMatch && timeMatch[1]) {
+        latency = parseInt(timeMatch[1]);
+      } else {
+        // Tentar outros padrões de resposta
+        const altMatch = stdout.match(/(\d+)ms/i);
+        if (altMatch && altMatch[1]) {
+          latency = parseInt(altMatch[1]);
+        }
+      }
+      
+      // Salvar no cache
+      this.cache.pingInfo = latency;
+      this.cache.lastPingUpdate = now;
+      
+      return latency;
     } catch (error) {
       console.warn('❌ Erro ao medir latência de rede:', error.message);
       return 0;

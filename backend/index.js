@@ -8,7 +8,20 @@ const compression = require('compression');
 const morgan = require('morgan');
 const path = require('path');
 const logger = require('./utils/logger');
-require('dotenv').config({ path: path.join(__dirname, '..', 'config.env') });
+// Configurações padrão do sistema
+const config = {
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    PORT: process.env.PORT || 3000,
+    METRICS_INTERVAL: process.env.METRICS_INTERVAL || 10000,
+    PROCESSES_INTERVAL: process.env.PROCESSES_INTERVAL || 60000,
+    SERVICES_INTERVAL: process.env.SERVICES_INTERVAL || 30000,
+    CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
+    LOG_LEVEL: process.env.LOG_LEVEL || 'info',
+    LOG_CLEANUP_DAYS: process.env.LOG_CLEANUP_DAYS || 7,
+    MAX_HISTORY_POINTS: process.env.MAX_HISTORY_POINTS || 60,
+    MAX_PROCESSES: process.env.MAX_PROCESSES || 10,
+    MAX_SERVICES: process.env.MAX_SERVICES || 20
+};
 
 // Resolver caminho absoluto para evitar conflitos de capitalização
 const servicesPath = path.resolve(__dirname, 'services');
@@ -25,7 +38,7 @@ try {
     MonitorService = require(path.join(servicesPath, 'monitorService.js'));
     SSHService = require(path.join(servicesPath, 'sshService.js'));
 } catch (error) {
-    console.error('Erro ao carregar serviços:', error.message);
+    logger.error('Erro ao carregar serviços:', error.message);
     process.exit(1);
 }
 
@@ -39,35 +52,67 @@ class SMXLiveBoardServer {
                 methods: ["GET", "POST"],
                 credentials: true
             },
-            // Configurações para evitar desconexões
-            pingTimeout: 60000,        // 60 segundos
-            pingInterval: 25000,       // 25 segundos
+            // Configurações otimizadas para estabilidade de conexão
+            pingTimeout: 30000,        // 30 segundos (reduzido)
+            pingInterval: 20000,       // 20 segundos (sincronizado com frontend)
             upgradeTimeout: 10000,     // 10 segundos
             allowEIO3: true,           // Compatibilidade
             transports: ['websocket', 'polling'], // WebSocket primeiro
-            // Configurações de heartbeat
-            heartbeatTimeout: 60000,
-            heartbeatInterval: 25000
+            // Configurações de heartbeat otimizadas
+            heartbeatTimeout: 30000,   // 30 segundos (reduzido)
+            heartbeatInterval: 20000,  // 20 segundos (sincronizado)
+            // Configurações adicionais para limpeza
+            allowUpgrades: true,
+            perMessageDeflate: {
+                threshold: 1024,
+                concurrencyLimit: 10,
+                memLevel: 7
+            },
+            // Aumentar buffer para evitar desconexões por dados grandes
+            maxHttpBufferSize: 1e8, // 100MB (aumentado de 1MB)
+            // Timeout para conexões inativas
+            connectTimeout: 60000,
+            // Configurações adicionais para estabilidade
+            forceNew: false,
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            maxReconnectionAttempts: 5,
+            // Configurações específicas para evitar desconexões
+            serveClient: false,        // Não servir cliente automaticamente
+            cookie: false,            // Desabilitar cookies para evitar problemas
+            // Configurações de transporte específicas
+            transports: ['websocket', 'polling'],
+            // Configurações de polling para fallback
+            polling: {
+                extraHeaders: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST',
+                    'Access-Control-Allow-Headers': 'Content-Type'
+                }
+            }
         });
         
         this.port = process.env.PORT || 3000;
         this.isProduction = process.env.NODE_ENV === 'production';
         
         this.intervals = { metrics: null, processes: null, adaptive: null };
+        this.lastMetricsSent = 0; // Throttling para evitar spam
         this.adaptiveConfig = {
             activeClients: 0,
-            baseMetricsInterval: 10000,    // 10s base
-            baseProcessesInterval: 60000,  // 60s base
-            minMetricsInterval: 5000,      // 5s mínimo
-            maxMetricsInterval: 30000,     // 30s máximo
+            baseMetricsInterval: 10000,    // 10s base (MAIS CONSERVADOR)
+            baseProcessesInterval: 45000,  // 45s base (MAIS CONSERVADOR)
+            minMetricsInterval: 8000,      // 8s mínimo
+            maxMetricsInterval: 20000,     // 20s máximo
             minProcessesInterval: 30000,   // 30s mínimo
-            maxProcessesInterval: 120000   // 2min máximo
+            maxProcessesInterval: 90000    // 90s máximo
         };
         
         // Inicializar serviços essenciais primeiro
         try {
             this.monitorService = new MonitorService();
-            logger.success('Serviços essenciais inicializados');
+            // Log removido - inicialização silenciosa
         } catch (error) {
             logger.failure('Erro ao inicializar serviços essenciais', { error: error.message });
             throw error;
@@ -93,7 +138,7 @@ class SMXLiveBoardServer {
                 this.initializeTelegramService()
             ]);
             
-            logger.success('Todos os serviços secundários inicializados');
+            // Log removido - inicialização silenciosa
         } catch (error) {
             logger.warn('Alguns serviços secundários falharam ao inicializar', { error: error.message });
             // Não parar o servidor por causa de serviços não críticos
@@ -103,7 +148,7 @@ class SMXLiveBoardServer {
     async initializeProcessMonitoring() {
         try {
             this.processMonitoring = new ProcessMonitoringService();
-            logger.info('ProcessMonitoringService inicializado');
+            // Log removido - inicialização silenciosa
         } catch (error) {
             logger.warn('Falha ao inicializar ProcessMonitoringService', { error: error.message });
         }
@@ -112,7 +157,7 @@ class SMXLiveBoardServer {
     async initializeTerminalService() {
         try {
             this.terminalService = new TerminalService();
-            logger.info('TerminalService inicializado');
+            // Log removido - inicialização silenciosa
         } catch (error) {
             logger.warn('Falha ao inicializar TerminalService', { error: error.message });
         }
@@ -122,19 +167,12 @@ class SMXLiveBoardServer {
         try {
             this.logsService = new LogsService();
             
-            // Integrar com MonitorService para logs reais
+            // Integrar com MonitorService para logs reais (silencioso)
             if (this.monitorService) {
-                this.logsService.info('MonitorService integrado com LogsService', 'SYSTEM');
-                
-                // Adicionar alguns logs de teste para demonstrar funcionamento
-                setTimeout(() => {
-                    this.logsService.info('Sistema SMX LiveBoard iniciado com sucesso', 'SYSTEM');
-                    this.logsService.info('Serviços de monitoramento ativos', 'MONITOR');
-                    this.logsService.info('WebSocket server configurado', 'NETWORK');
-                }, 2000);
+                // Logs de teste removidos para reduzir spam
             }
             
-            logger.info('LogsService inicializado');
+            // Log removido - inicialização silenciosa
         } catch (error) {
             logger.warn('Falha ao inicializar LogsService', { error: error.message });
         }
@@ -149,7 +187,7 @@ class SMXLiveBoardServer {
             const chatId = '-4987412032';
             
             this.telegramService.configure(botToken, chatId);
-            logger.info('TelegramService inicializado e configurado');
+            // Log removido - inicialização silenciosa
             
             // Configurar envio automático diário às 23h
             this.setupDailyTelegramReport();
@@ -173,7 +211,7 @@ class SMXLiveBoardServer {
             
             const timeUntilReport = nextReport.getTime() - now.getTime();
             
-            logger.info(`📅 Relatório agendado para ${nextReport.toLocaleString('pt-BR')}`);
+            // Log removido - agendamento silencioso
             
             setTimeout(async () => {
                 try {
@@ -275,14 +313,28 @@ class SMXLiveBoardServer {
         }
     }
 
+    // Contar clientes únicos baseados no IP
+    getUniqueClientsCount() {
+        const connectedClients = new Set();
+        
+        this.io.sockets.sockets.forEach((socket) => {
+            const clientIP = socket.handshake.address || socket.conn.remoteAddress;
+            // Normalizar IP (remover IPv6 prefix se necessário)
+            const normalizedIP = clientIP.replace(/^::ffff:/, '');
+            connectedClients.add(normalizedIP);
+        });
+        
+        return connectedClients.size;
+    }
+
     // Atualizar contador de clientes ativos
     updateActiveClients() {
-        this.adaptiveConfig.activeClients = this.io.engine.clientsCount;
+        const newCount = this.getUniqueClientsCount();
+        const oldCount = this.adaptiveConfig.activeClients;
         
-        // Log apenas quando há mudança significativa
-        if (this.adaptiveConfig.activeClients > 0) {
-            logger.info(`Clientes ativos: ${this.adaptiveConfig.activeClients}`);
-        }
+        this.adaptiveConfig.activeClients = newCount;
+        
+        // Atualizar contador de clientes (sem log)
     }
 
     // Reiniciar intervalos com novos valores adaptativos
@@ -291,19 +343,313 @@ class SMXLiveBoardServer {
         this.startDataCollection();
     }
 
+    // Diagnosticar problemas de comunicação
+    diagnoseCommunicationProblem(socket, bytesSent, bytesReceived) {
+        const clientIP = socket.handshake.address || socket.conn.remoteAddress;
+        const normalizedIP = clientIP.replace(/^::ffff:/, '');
+        const userAgent = socket.handshake.headers['user-agent'] || 'Unknown';
+        const transport = socket.conn.transport.name;
+        const lastHeartbeat = socket._lastHeartbeat || 0;
+        const timeSinceHeartbeat = Date.now() - lastHeartbeat;
+        
+        // Coletar informações de diagnóstico
+        const diagnosis = {
+            socketId: socket.id,
+            clientIP: normalizedIP,
+            transport: transport,
+            userAgent: userAgent,
+            bytesSent: bytesSent,
+            bytesReceived: bytesReceived,
+            timeSinceHeartbeat: timeSinceHeartbeat,
+            connected: socket.connected,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Analisar possíveis causas
+        const possibleCauses = [];
+        
+        if (timeSinceHeartbeat > 60000) {
+            possibleCauses.push('Cliente não está enviando heartbeat (possível problema no frontend)');
+        }
+        
+        if (transport === 'polling') {
+            possibleCauses.push('Usando polling em vez de WebSocket (possível problema de firewall/proxy)');
+        }
+        
+        if (userAgent.includes('OPR')) {
+            possibleCauses.push('Navegador Opera detectado (possível problema de compatibilidade)');
+        }
+        
+        if (bytesReceived === 0) {
+            possibleCauses.push('Cliente não está respondendo a nenhuma mensagem (possível problema de rede)');
+        }
+        
+        if (bytesReceived < 50 && bytesSent > 5000) {
+            possibleCauses.push('Comunicação muito unidirecional (possível problema de buffer ou processamento)');
+        }
+        
+        // Log removido - diagnóstico silencioso
+        
+        // Tentar soluções automáticas
+        if (timeSinceHeartbeat > 120000) {
+            // Log removido - reconexão silenciosa
+            socket.emit('force_reconnect', { reason: 'no_heartbeat', timestamp: Date.now() });
+        }
+        
+        return diagnosis;
+    }
+
+    // Limpar conexões órfãs (sem heartbeat há muito tempo)
+    cleanupOrphanedConnections() {
+        const now = Date.now();
+        const orphanedConnections = [];
+        const allConnections = [];
+        
+        this.io.sockets.sockets.forEach((socket) => {
+            const lastHeartbeat = socket._lastHeartbeat || 0;
+            const timeSinceHeartbeat = now - lastHeartbeat;
+            const clientIP = socket.handshake.address || socket.conn.remoteAddress;
+            const normalizedIP = clientIP.replace(/^::ffff:/, '');
+            
+            allConnections.push({
+                id: socket.id,
+                clientIP: normalizedIP,
+                connected: socket.connected,
+                timeSinceHeartbeat: timeSinceHeartbeat,
+                transport: socket.conn.transport.name
+            });
+            
+            // Considerar órfã se não há heartbeat há mais de 90 segundos (reduzido de 2 minutos)
+            if (timeSinceHeartbeat > 90000) {
+                orphanedConnections.push({
+                    socket: socket,
+                    id: socket.id,
+                    clientIP: normalizedIP,
+                    timeSinceHeartbeat: timeSinceHeartbeat
+                });
+            }
+        });
+        
+        // Log apenas se houver problemas
+        if (allConnections.some(conn => conn.timeSinceHeartbeat > 60000)) {
+            // Log removido - status silencioso
+        }
+        
+        if (orphanedConnections.length > 0) {
+            // Log removido - limpeza silenciosa
+            
+            orphanedConnections.forEach(conn => {
+                conn.socket.disconnect(true);
+            });
+        }
+    }
+
+    // Configurar monitoramento de saúde da conexão
+    setupConnectionHealthMonitoring(socket) {
+        // Configurar timers de monitoramento
+        socket._lastHeartbeat = Date.now();
+        socket._heartbeatTimer = setInterval(() => {
+            if (socket.connected) {
+                const timeSinceLastHeartbeat = Date.now() - socket._lastHeartbeat;
+                if (timeSinceLastHeartbeat > 25000) { // 25 segundos sem heartbeat
+                    // Log removido - health check silencioso
+                    socket.emit('health_check', { timestamp: Date.now() });
+                }
+            }
+        }, 10000); // Verificar a cada 10 segundos (mais frequente)
+
+        // Atualizar timestamp do heartbeat quando receber
+        socket.on('heartbeat', (data) => {
+            socket._lastHeartbeat = Date.now();
+            // Log removido - heartbeat silencioso
+            
+            // Responder com acknowledgment
+            socket.emit('heartbeat_ack', { 
+                timestamp: Date.now(),
+                clientTimestamp: data?.timestamp || null
+            });
+        });
+
+        // Limpar timer quando socket desconectar
+        socket.on('disconnect', () => {
+            if (socket._heartbeatTimer) {
+                clearInterval(socket._heartbeatTimer);
+                delete socket._heartbeatTimer;
+            }
+        });
+    }
+
+    // Lidar com conexões duplicadas do mesmo cliente
+    handleDuplicateConnections(newSocket, clientIP) {
+        const existingConnections = [];
+        
+        // Encontrar todas as conexões existentes do mesmo IP
+        this.io.sockets.sockets.forEach((socket) => {
+            if (socket.id !== newSocket.id) {
+                const existingIP = socket.handshake.address || socket.conn.remoteAddress;
+                const normalizedExistingIP = existingIP.replace(/^::ffff:/, '');
+                
+                if (normalizedExistingIP === clientIP) {
+                    existingConnections.push({
+                        socket: socket,
+                        id: socket.id,
+                        transport: socket.conn.transport.name,
+                        connected: socket.connected,
+                        lastHeartbeat: socket._lastHeartbeat || 0
+                    });
+                }
+            }
+        });
+        
+        if (existingConnections.length > 0) {
+            // Conexões duplicadas detectadas - fechar órfãs silenciosamente
+            
+            // Fechar conexões antigas que não estão respondendo
+            existingConnections.forEach(conn => {
+                const timeSinceHeartbeat = Date.now() - (conn.lastHeartbeat || 0);
+                
+                if (!conn.connected || timeSinceHeartbeat > 30000) {
+                    conn.socket.disconnect(true);
+                }
+            });
+        }
+    }
+
+    // Configurar diagnósticos de transporte
+    setupTransportDiagnostics(socket) {
+        const clientIP = socket.handshake.address || socket.conn.remoteAddress;
+        const normalizedIP = clientIP.replace(/^::ffff:/, '');
+        
+        // Monitorar mudanças de transporte
+        socket.conn.on('upgrade', () => {
+            // Upgrade de transporte realizado
+        });
+
+        // Monitorar erros de transporte
+        socket.conn.on('error', (error) => {
+            logger.error(`❌ Erro de transporte: ${socket.id} (${normalizedIP}) - ${error.message}`, {
+                socketId: socket.id,
+                clientIP: normalizedIP,
+                transport: socket.conn.transport.name,
+                error: error.message,
+                stack: error.stack
+            });
+        });
+
+        // Monitorar fechamento de transporte
+        socket.conn.on('close', (reason) => {
+            // Fechamento de transporte detectado
+        });
+
+        // Monitorar dados enviados/recebidos para detectar problemas
+        let bytesSent = 0;
+        let bytesReceived = 0;
+        
+        socket.conn.on('packet', (packet) => {
+            bytesReceived += JSON.stringify(packet).length;
+        });
+
+        const originalEmit = socket.emit;
+        socket.emit = function(...args) {
+            bytesSent += JSON.stringify(args).length;
+            return originalEmit.apply(this, args);
+        };
+
+        // Monitorar estatísticas de comunicação
+        socket._statsTimer = setInterval(() => {
+            if (socket.connected) {
+                // Monitorar problemas de comunicação e diagnosticar
+                if (bytesReceived < 100 && bytesSent > 1000) {
+                    this.diagnoseCommunicationProblem(socket, bytesSent, bytesReceived);
+                }
+            }
+        }, 30000);
+
+        // Limpar timer quando socket desconectar
+        socket.on('disconnect', () => {
+            if (socket._statsTimer) {
+                clearInterval(socket._statsTimer);
+                delete socket._statsTimer;
+            }
+        });
+    }
+
+    // Limpar recursos específicos de um socket
+    cleanupSocketResources(socket) {
+        try {
+            // Fechar sessões de terminal associadas
+            if (this.terminalService) {
+                const sessionId = socket.id + '_terminal';
+                this.terminalService.closeSession(sessionId);
+            }
+            
+            // Parar monitoramento de logs em tempo real
+            if (this.logsService) {
+                this.logsService.stopRealTimeMonitoring(socket);
+            }
+            
+            // Limpar todos os timers específicos do socket
+            if (socket._cleanupTimer) {
+                clearTimeout(socket._cleanupTimer);
+                delete socket._cleanupTimer;
+            }
+            
+            if (socket._heartbeatTimer) {
+                clearInterval(socket._heartbeatTimer);
+                delete socket._heartbeatTimer;
+            }
+            
+            if (socket._statsTimer) {
+                clearInterval(socket._statsTimer);
+                delete socket._statsTimer;
+            }
+            
+        } catch (error) {
+            logger.warn(`Erro ao limpar recursos do socket ${socket.id}:`, error.message);
+        }
+    }
+
     setupMiddleware() {
         this.app.use(helmet({ contentSecurityPolicy: false }));
-        this.app.use(compression());
-        this.app.use(morgan(this.isProduction ? 'combined' : 'dev'));
-        this.app.use(cors());
-        this.app.use(express.json({ limit: '10mb' }));
-        this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+        this.app.use(compression({
+            level: 6,
+            threshold: 1024,
+            filter: (req, res) => {
+                if (req.headers['x-no-compression']) {
+                    return false;
+                }
+                return compression.filter(req, res);
+            }
+        }));
         
-        // Arquivos estáticos (servir da pasta pai)
-        this.app.use(express.static(path.join(__dirname, '..')));
-        this.app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
-        this.app.use('/js', express.static(path.join(__dirname, '..', 'js')));
-        this.app.use('/styles', express.static(path.join(__dirname, '..', 'styles')));
+        // Morgan apenas em desenvolvimento para reduzir logs
+        if (!this.isProduction) {
+            this.app.use(morgan('dev'));
+        }
+        
+        this.app.use(cors());
+        this.app.use(express.json({ limit: '5mb' })); // Reduzido de 10mb
+        this.app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+        
+        // Arquivos estáticos com cache otimizado
+        const staticOptions = {
+            maxAge: this.isProduction ? '1d' : '0', // Cache em produção
+            etag: true,
+            lastModified: true,
+            setHeaders: (res, path) => {
+                // Cache específico para diferentes tipos de arquivo
+                if (path.endsWith('.css') || path.endsWith('.js')) {
+                    res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hora
+                } else if (path.endsWith('.ico') || path.endsWith('.png') || path.endsWith('.jpg')) {
+                    res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 dia
+                }
+            }
+        };
+        
+        this.app.use(express.static(path.join(__dirname, '..'), staticOptions));
+        this.app.use('/assets', express.static(path.join(__dirname, '..', 'assets'), staticOptions));
+        this.app.use('/js', express.static(path.join(__dirname, '..', 'js'), staticOptions));
+        this.app.use('/styles', express.static(path.join(__dirname, '..', 'styles'), staticOptions));
     }
 
     setupRoutes() {
@@ -397,6 +743,126 @@ class SMXLiveBoardServer {
             }
         });
 
+        // Endpoint para status das conexões WebSocket
+        this.app.get('/api/system/connections', async (req, res) => {
+            try {
+                const connections = [];
+                const uniqueClients = new Set();
+                const now = Date.now();
+                
+                this.io.sockets.sockets.forEach((socket) => {
+                    const clientIP = socket.handshake.address || socket.conn.remoteAddress;
+                    const normalizedIP = clientIP.replace(/^::ffff:/, '');
+                    uniqueClients.add(normalizedIP);
+                    
+                    const lastHeartbeat = socket._lastHeartbeat || 0;
+                    const timeSinceHeartbeat = now - lastHeartbeat;
+                    
+                    connections.push({
+                        socketId: socket.id,
+                        clientIP: normalizedIP,
+                        transport: socket.conn.transport.name,
+                        connected: socket.connected,
+                        connectedAt: socket.handshake.time,
+                        userAgent: socket.handshake.headers['user-agent'] || 'Unknown',
+                        lastHeartbeat: lastHeartbeat,
+                        timeSinceHeartbeat: timeSinceHeartbeat,
+                        timeSinceHeartbeatSeconds: Math.round(timeSinceHeartbeat / 1000)
+                    });
+                });
+                
+                res.json({
+                    totalConnections: connections.length,
+                    uniqueClients: uniqueClients.size,
+                    connections: connections,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Endpoint para forçar limpeza de conexões órfãs
+        this.app.post('/api/system/cleanup-connections', async (req, res) => {
+            try {
+                this.cleanupOrphanedConnections();
+                
+                res.json({
+                    success: true,
+                    message: 'Limpeza de conexões órfãs executada',
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Endpoint para diagnóstico de problemas de comunicação
+        this.app.get('/api/system/communication-diagnostics', async (req, res) => {
+            try {
+                const diagnostics = [];
+                const now = Date.now();
+                
+                this.io.sockets.sockets.forEach((socket) => {
+                    const clientIP = socket.handshake.address || socket.conn.remoteAddress;
+                    const normalizedIP = clientIP.replace(/^::ffff:/, '');
+                    const userAgent = socket.handshake.headers['user-agent'] || 'Unknown';
+                    const transport = socket.conn.transport.name;
+                    const lastHeartbeat = socket._lastHeartbeat || 0;
+                    const timeSinceHeartbeat = now - lastHeartbeat;
+                    
+                    // Calcular estatísticas de comunicação
+                    let bytesSent = 0;
+                    let bytesReceived = 0;
+                    
+                    // Simular cálculo de bytes (em produção seria mais preciso)
+                    const connectionTime = now - socket.handshake.time;
+                    const estimatedBytesSent = Math.floor(connectionTime / 1000) * 200; // Estimativa
+                    const estimatedBytesReceived = Math.floor(connectionTime / 1000) * 50; // Estimativa
+                    
+                    const diagnostic = {
+                        socketId: socket.id,
+                        clientIP: normalizedIP,
+                        transport: transport,
+                        userAgent: userAgent,
+                        connected: socket.connected,
+                        connectionTime: Math.floor(connectionTime / 1000) + 's',
+                        timeSinceHeartbeat: Math.floor(timeSinceHeartbeat / 1000) + 's',
+                        estimatedBytesSent: estimatedBytesSent,
+                        estimatedBytesReceived: estimatedBytesReceived,
+                        healthStatus: timeSinceHeartbeat < 30000 ? 'HEALTHY' : 
+                                     timeSinceHeartbeat < 60000 ? 'WARNING' : 'CRITICAL',
+                        possibleIssues: []
+                    };
+                    
+                    // Identificar possíveis problemas
+                    if (timeSinceHeartbeat > 60000) {
+                        diagnostic.possibleIssues.push('Sem heartbeat há muito tempo');
+                    }
+                    if (transport === 'polling') {
+                        diagnostic.possibleIssues.push('Usando polling (possível problema de firewall)');
+                    }
+                    if (userAgent.includes('OPR')) {
+                        diagnostic.possibleIssues.push('Navegador Opera (possível problema de compatibilidade)');
+                    }
+                    if (estimatedBytesReceived < estimatedBytesSent * 0.1) {
+                        diagnostic.possibleIssues.push('Comunicação muito unidirecional');
+                    }
+                    
+                    diagnostics.push(diagnostic);
+                });
+                
+                res.json({
+                    success: true,
+                    totalConnections: diagnostics.length,
+                    diagnostics: diagnostics,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        });
+
         this.app.get('/api/processes', async (req, res) => {
             try {
                 if (!this.processMonitoring) {
@@ -426,7 +892,7 @@ class SMXLiveBoardServer {
                 const result = await this.terminalService.executeCommand(command);
                 res.json(result);
             } catch (error) {
-                console.error('Erro ao executar comando:', error);
+                logger.error('Erro ao executar comando:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -441,7 +907,7 @@ class SMXLiveBoardServer {
                 const session = this.terminalService.createSession(sessionId);
                 res.json({ sessionId, status: 'created' });
             } catch (error) {
-                console.error('Erro ao criar sessão terminal:', error);
+                logger.error('Erro ao criar sessão terminal:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -466,7 +932,7 @@ class SMXLiveBoardServer {
                 
                 res.json({ suggestions, partialCommand, type });
             } catch (error) {
-                console.error('Erro ao obter sugestões:', error);
+                logger.error('Erro ao obter sugestões:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -481,7 +947,7 @@ class SMXLiveBoardServer {
                 const result = this.terminalService.closeSession(sessionId);
                 res.json(result);
             } catch (error) {
-                console.error('Erro ao fechar sessão:', error);
+                logger.error('Erro ao fechar sessão:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -497,7 +963,7 @@ class SMXLiveBoardServer {
                 const result = this.logsService.getLogs(options);
                 res.json(result);
             } catch (error) {
-                console.error('Erro ao obter logs:', error);
+                logger.error('Erro ao obter logs:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -510,7 +976,7 @@ class SMXLiveBoardServer {
                 const stats = this.logsService.getLogStats();
                 res.json(stats);
             } catch (error) {
-                console.error('Erro ao obter estatísticas de logs:', error);
+                logger.error('Erro ao obter estatísticas de logs:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -528,7 +994,7 @@ class SMXLiveBoardServer {
                 res.setHeader('Content-Disposition', `attachment; filename="smx-logs-${new Date().toISOString().split('T')[0]}.${format}"`);
                 res.send(exportData);
             } catch (error) {
-                console.error('Erro ao exportar logs:', error);
+                logger.error('Erro ao exportar logs:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -546,7 +1012,7 @@ class SMXLiveBoardServer {
                     ...result
                 });
             } catch (error) {
-                console.error('Erro ao limpar logs:', error);
+                logger.error('Erro ao limpar logs:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -563,7 +1029,7 @@ class SMXLiveBoardServer {
                     message: isConfigured ? 'Bot configurado' : 'Bot não configurado'
                 });
             } catch (error) {
-                console.error('Erro ao verificar status do Telegram:', error);
+                logger.error('Erro ao verificar status do Telegram:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -590,7 +1056,7 @@ class SMXLiveBoardServer {
                     test: testResult
                 });
             } catch (error) {
-                console.error('Erro ao configurar Telegram:', error);
+                logger.error('Erro ao configurar Telegram:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -618,7 +1084,7 @@ class SMXLiveBoardServer {
                     messageId: result.message_id
                 });
             } catch (error) {
-                console.error('Erro ao enviar mensagem:', error);
+                logger.error('Erro ao enviar mensagem:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -667,7 +1133,7 @@ class SMXLiveBoardServer {
                     messageId: result.message_id
                 });
             } catch (error) {
-                console.error('Erro ao enviar alerta:', error);
+                logger.error('Erro ao enviar alerta:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -685,7 +1151,7 @@ class SMXLiveBoardServer {
                 const result = await this.telegramService.testConnection();
                 res.json(result);
             } catch (error) {
-                console.error('Erro ao testar conexão:', error);
+                logger.error('Erro ao testar conexão:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -756,8 +1222,25 @@ class SMXLiveBoardServer {
 
     setupSocketIO() {
         this.io.on('connection', (socket) => {
+            // Log detalhado de conexão para diagnóstico
+            const clientIP = socket.handshake.address || socket.conn.remoteAddress;
+            const normalizedIP = clientIP.replace(/^::ffff:/, '');
+            const userAgent = socket.handshake.headers['user-agent'] || 'Unknown';
+            const transport = socket.conn.transport.name;
+            
+            // Verificar e limpar conexões duplicadas do mesmo cliente
+            this.handleDuplicateConnections(socket, normalizedIP);
+            
+            // Nova conexão estabelecida
+            
             // Atualizar contador de clientes
             this.updateActiveClients();
+            
+            // Configurar monitoramento de saúde da conexão
+            this.setupConnectionHealthMonitoring(socket);
+            
+            // Configurar diagnósticos de transporte
+            this.setupTransportDiagnostics(socket);
             
             // Enviar dados iniciais
             this.sendInitialData(socket);
@@ -765,6 +1248,39 @@ class SMXLiveBoardServer {
             // Evento de ping/pong para monitoramento
             socket.on('ping', () => {
                 socket.emit('pong', { timestamp: Date.now() });
+            });
+
+            // Evento de heartbeat personalizado
+            socket.on('heartbeat', () => {
+                socket.emit('heartbeat_ack', { timestamp: Date.now() });
+            });
+
+            // Eventos para solicitação imediata de dados após reconexão
+            socket.on('request_initial_data', async () => {
+                try {
+                    const metrics = await this.monitorService.getBasicSystemInfo();
+                    socket.emit('initial:data', metrics);
+                } catch (error) {
+                    logger.error(`❌ Erro ao enviar dados iniciais para ${socket.id}:`, error.message);
+                }
+            });
+
+            socket.on('request_current_metrics', async () => {
+                try {
+                    const metrics = await this.monitorService.getSystemInfo();
+                    socket.emit('system:metrics', metrics);
+                } catch (error) {
+                    logger.error(`❌ Erro ao enviar métricas atuais para ${socket.id}:`, error.message);
+                }
+            });
+
+            socket.on('request_current_processes', async () => {
+                try {
+                    const processesData = await this.monitorService.getProcessesOnly(5);
+                    socket.emit('processes:update', processesData.processes);
+                } catch (error) {
+                    logger.error(`❌ Erro ao enviar processos atuais para ${socket.id}:`, error.message);
+                }
             });
 
             // Terminal interativo - criar sessão
@@ -789,7 +1305,7 @@ class SMXLiveBoardServer {
                     
                     socket.emit('terminal:created', { sessionId });
                 } catch (error) {
-                    console.error(`❌ Terminal create error for ${socket.id}:`, error.message);
+                    logger.error(`❌ Terminal create error for ${socket.id}:`, error.message);
                     socket.emit('terminal:error', { error: error.message });
                 }
             });
@@ -813,7 +1329,7 @@ class SMXLiveBoardServer {
                     this.terminalService.sendToSession(sessionId, command);
                     socket.emit('terminal:command_sent', { command, sessionId });
                 } catch (error) {
-                    console.error(`❌ Terminal command error for ${socket.id}:`, error.message);
+                    logger.error(`❌ Terminal command error for ${socket.id}:`, error.message);
                     socket.emit('terminal:error', { error: error.message });
                 }
             });
@@ -837,7 +1353,7 @@ class SMXLiveBoardServer {
                     
                     socket.emit('terminal:suggestions', { suggestions, partialCommand, type });
                 } catch (error) {
-                    console.error(`❌ Terminal autocomplete error for ${socket.id}:`, error.message);
+                    logger.error(`❌ Terminal autocomplete error for ${socket.id}:`, error.message);
                     socket.emit('terminal:error', { error: error.message });
                 }
             });
@@ -855,7 +1371,7 @@ class SMXLiveBoardServer {
                         socket.emit('terminal:closed', { sessionId });
                     }
                 } catch (error) {
-                    console.error(`❌ Terminal close error for ${socket.id}:`, error.message);
+                    logger.error(`❌ Terminal close error for ${socket.id}:`, error.message);
                 }
             });
 
@@ -871,7 +1387,7 @@ class SMXLiveBoardServer {
                     const result = this.logsService.getLogs(options);
                     socket.emit('logs:data', result);
                 } catch (error) {
-                    console.error(`❌ Logs request error for ${socket.id}:`, error.message);
+                    logger.error(`❌ Logs request error for ${socket.id}:`, error.message);
                     socket.emit('logs:error', { error: error.message });
                 }
             });
@@ -887,7 +1403,7 @@ class SMXLiveBoardServer {
                     const stats = this.logsService.getLogStats();
                     socket.emit('logs:stats', stats);
                 } catch (error) {
-                    console.error(`❌ Logs stats error for ${socket.id}:`, error.message);
+                    logger.error(`❌ Logs stats error for ${socket.id}:`, error.message);
                     socket.emit('logs:error', { error: error.message });
                 }
             });
@@ -904,7 +1420,7 @@ class SMXLiveBoardServer {
                     this.logsService.startRealTimeMonitoring(socket);
                     socket.emit('logs:realtime_started', { message: 'Monitoramento em tempo real iniciado' });
                 } catch (error) {
-                    console.error(`❌ Logs realtime start error for ${socket.id}:`, error.message);
+                    logger.error(`❌ Logs realtime start error for ${socket.id}:`, error.message);
                     socket.emit('logs:error', { error: error.message });
                 }
             });
@@ -912,7 +1428,7 @@ class SMXLiveBoardServer {
 
             // Tratamento de erros de conexão
             socket.on('error', (error) => {
-                console.error(`❌ Socket error for ${socket.id}:`, error.message);
+                logger.error(`❌ Socket error for ${socket.id}:`, error.message);
             });
 
             // Eventos de desconexão
@@ -987,9 +1503,29 @@ class SMXLiveBoardServer {
             });
 
             socket.on('disconnect', (reason) => {
+                // Limpar recursos específicos do socket
+                this.cleanupSocketResources(socket);
+                
                 // Atualizar contador de clientes
                 this.updateActiveClients();
-                // Log removido para limpar terminal
+                
+                // Log detalhado baseado no motivo da desconexão
+                const clientIP = socket.handshake.address || socket.conn.remoteAddress;
+                const normalizedIP = clientIP.replace(/^::ffff:/, '');
+                
+                if (reason === 'transport close') {
+                    logger.info(`Cliente desconectado: ${socket.id} (${normalizedIP}) - Fechamento de transporte`);
+                } else if (reason === 'transport error') {
+                    logger.warn(`Cliente desconectado: ${socket.id} (${normalizedIP}) - Erro de transporte`);
+                } else if (reason === 'ping timeout') {
+                    logger.warn(`Cliente desconectado: ${socket.id} (${normalizedIP}) - Timeout de ping`);
+                } else if (reason === 'client namespace disconnect') {
+                    // Log silencioso para desconexões normais
+                } else if (reason === 'server namespace disconnect') {
+                    // Log silencioso para desconexões do servidor
+                } else {
+                    logger.info(`Cliente desconectado: ${socket.id} (${normalizedIP}) - ${reason}`);
+                }
             });
 
             // Evento de reconexão
@@ -1000,7 +1536,17 @@ class SMXLiveBoardServer {
 
         // Log de eventos do servidor Socket.IO
         this.io.engine.on('connection_error', (err) => {
-            console.error('❌ Erro de conexão Socket.IO:', err.message);
+            logger.error('Erro de conexão Socket.IO:', err.message);
+        });
+
+        // Monitorar erros de upgrade
+        this.io.engine.on('upgrade_error', (err) => {
+            logger.warn('Erro de upgrade WebSocket:', err.message);
+        });
+
+        // Monitorar erros de polling
+        this.io.engine.on('polling_error', (err) => {
+            logger.warn('Erro de polling:', err.message);
         });
     }
 
@@ -1037,7 +1583,7 @@ class SMXLiveBoardServer {
             }, 3000);
             
         } catch (error) {
-            console.error(`❌ Erro ao enviar dados iniciais para ${socket.id}:`, error.message);
+            logger.error(`❌ Erro ao enviar dados iniciais para ${socket.id}:`, error.message);
             socket.emit('initial:error', { 
                 error: error.message,
                 timestamp: new Date().toISOString()
@@ -1061,12 +1607,14 @@ class SMXLiveBoardServer {
             this.adaptiveConfig.maxProcessesInterval
         );
         
-        logger.info(`Intervalos adaptativos: Métricas=${metricsInterval}ms, Processos=${processesInterval}ms`);
+        // Log removido - intervalos silenciosos
         
         // Coletar métricas do sistema com intervalo adaptativo
         this.intervals.metrics = setInterval(async () => {
             try {
                 const metrics = await this.monitorService.getSystemInfo();
+                
+                // Log removido - métricas silenciosas
                 
                 // Log de métricas se LogsService estiver disponível
                 if (this.logsService) {
@@ -1098,11 +1646,17 @@ class SMXLiveBoardServer {
                 }
                 
                 // Verificar se há clientes conectados antes de enviar
-                if (this.io.engine.clientsCount > 0) {
-                    this.io.emit('system:metrics', metrics);
+                if (this.getUniqueClientsCount() > 0) {
+                    // Throttling: evitar envios muito frequentes
+                    const now = Date.now();
+                    if (now - this.lastMetricsSent > 5000) { // Mínimo 5s entre envios
+                        // Log removido - envio silencioso
+                        this.io.emit('system:metrics', metrics);
+                        this.lastMetricsSent = now;
+                    }
                 }
             } catch (error) {
-                console.error('❌ Erro ao coletar métricas:', error.message);
+                logger.error('❌ Erro ao coletar métricas:', error.message);
                 
                 // Log de erro se LogsService estiver disponível
                 if (this.logsService) {
@@ -1118,14 +1672,14 @@ class SMXLiveBoardServer {
                 // Usar o método otimizado do MonitorService
                 const processesData = await this.monitorService.getProcessesOnly(5);
                 // Verificar se há clientes conectados antes de enviar
-                if (this.io.engine.clientsCount > 0) {
+                if (this.getUniqueClientsCount() > 0) {
                     // Enviar dados no formato correto para o frontend
                     this.io.emit('processes:update', processesData.processes);
                 }
             } catch (error) {
                 console.error('❌ Erro ao coletar processos:', error.message);
                 // Enviar dados vazios em caso de erro para manter o frontend funcionando
-                if (this.io.engine.clientsCount > 0) {
+                if (this.getUniqueClientsCount() > 0) {
                     this.io.emit('processes:update', { 
                         list: [],
                         totals: { cpu: 0, memory: 0, count: 0 }
@@ -1136,13 +1690,17 @@ class SMXLiveBoardServer {
 
         // Timer para ajustar intervalos dinamicamente a cada 30 segundos
         this.intervals.adaptive = setInterval(() => {
-            const currentClients = this.io.engine.clientsCount;
+            const currentClients = this.getUniqueClientsCount();
             if (currentClients !== this.adaptiveConfig.activeClients) {
-                logger.info(`Ajustando intervalos: ${this.adaptiveConfig.activeClients} → ${currentClients} clientes`);
                 this.adaptiveConfig.activeClients = currentClients;
                 this.restartAdaptiveIntervals();
             }
         }, 30000);
+
+        // Timer para limpeza de conexões órfãs a cada 60 segundos
+        this.intervals.cleanup = setInterval(() => {
+            this.cleanupOrphanedConnections();
+        }, 60000);
         
         // Coleta de dados iniciada
     }
@@ -1152,11 +1710,11 @@ class SMXLiveBoardServer {
         Object.values(this.intervals).forEach(interval => {
             if (interval) clearInterval(interval);
         });
-        this.intervals = { metrics: null, processes: null, adaptive: null };
+        this.intervals = { metrics: null, processes: null, adaptive: null, cleanup: null };
     }
 
     start() {
-        this.server.listen(this.port, () => {
+        this.server.listen(this.port, '0.0.0.0', () => {
             // Banner retro gaming épico
             console.log(`
 ╔══════════════════════════════════════════════════════════════╗
@@ -1175,10 +1733,7 @@ class SMXLiveBoardServer {
             `);
             
             logger.startup(`SMX LiveBoard rodando na porta ${this.port}`, { port: this.port });
-            logger.info(`📊 Dashboard: http://localhost:${this.port}`);
-            logger.info(`🔧 API: http://localhost:${this.port}/api/health`);
-            logger.info(`⚡ Socket.IO: ws://localhost:${this.port}`);
-            logger.info(`📋 Serviços disponíveis: Sistema, Terminal, SSH, Logs, Telegram`);
+            // Logs de URLs removidos - informações no banner
         });
     }
 }

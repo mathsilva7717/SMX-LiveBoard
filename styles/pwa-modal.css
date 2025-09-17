@@ -1,0 +1,458 @@
+/* ===== MODAL PWA INSTALL ===== */
+
+.pwa-install-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pwaModalFadeIn 0.3s ease-out;
+}
+
+.pwa-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  animation: pwaBackdropFadeIn 0.3s ease-out;
+}
+
+.pwa-modal-container {
+  position: relative;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: pwaModalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pwa-modal-content {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 212, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  position: relative;
+}
+
+.pwa-modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #00d4ff 25%, 
+    #00ff88 50%, 
+    #ffaa00 75%, 
+    transparent 100%);
+  animation: pwaGradientFlow 3s ease-in-out infinite;
+}
+
+/* Header do Modal */
+.pwa-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+  position: relative;
+}
+
+.pwa-modal-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+  animation: pwaIconPulse 2s ease-in-out infinite;
+}
+
+.pwa-modal-icon svg {
+  color: #000;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.pwa-modal-title h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.pwa-modal-title p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #00d4ff;
+  font-weight: 500;
+}
+
+.pwa-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.pwa-modal-close:hover {
+  background: rgba(255, 71, 87, 0.2);
+  border-color: #ff4757;
+  color: #ff4757;
+  transform: scale(1.1);
+}
+
+/* Body do Modal */
+.pwa-modal-body {
+  padding: 24px;
+}
+
+.pwa-features {
+  margin-bottom: 24px;
+}
+
+.pwa-feature {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.pwa-feature:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+  transform: translateX(4px);
+}
+
+.pwa-feature-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #00ff88, #00cc66);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+}
+
+.pwa-feature-icon svg {
+  color: #000;
+}
+
+.pwa-feature-text h4 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.pwa-feature-text p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+/* Preview do App */
+.pwa-preview {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pwa-preview-window {
+  width: 200px;
+  height: 120px;
+  background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: pwaPreviewFloat 3s ease-in-out infinite;
+}
+
+.pwa-preview-header {
+  height: 24px;
+  background: rgba(0, 212, 255, 0.1);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.pwa-preview-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.pwa-preview-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00d4ff;
+  animation: pwaDotPulse 2s ease-in-out infinite;
+}
+
+.pwa-preview-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.pwa-preview-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.pwa-preview-title {
+  flex: 1;
+  text-align: center;
+  font-size: 0.7rem;
+  color: #00d4ff;
+  font-weight: 600;
+}
+
+.pwa-preview-content {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pwa-preview-gauge {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #00d4ff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: pwaGaugeSpin 2s linear infinite;
+}
+
+.pwa-preview-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pwa-preview-bar {
+  height: 6px;
+  background: linear-gradient(90deg, #00d4ff, #00ff88);
+  border-radius: 3px;
+  animation: pwaBarGrow 2s ease-in-out infinite;
+}
+
+.pwa-preview-bar:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.pwa-preview-bar:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+/* Footer do Modal */
+.pwa-modal-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.pwa-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.pwa-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.pwa-btn:hover::before {
+  left: 100%;
+}
+
+.pwa-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.pwa-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.pwa-btn-primary {
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  border: 1px solid #00d4ff;
+  color: #000;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.pwa-btn-primary:hover {
+  background: linear-gradient(135deg, #00e5ff, #00aadd);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.4);
+}
+
+.pwa-btn:active {
+  transform: translateY(0);
+}
+
+/* Animações */
+@keyframes pwaModalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pwaBackdropFadeIn {
+  from {
+    backdrop-filter: blur(0px);
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+@keyframes pwaModalSlideIn {
+  from {
+    transform: translateY(-50px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pwaGradientFlow {
+  0%, 100% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pwaIconPulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
+  }
+}
+
+@keyframes pwaPreviewFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes pwaDotPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes pwaGaugeSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pwaBarGrow {
+  0%, 100% {
+    width: 20%;
+  }
+  50% {
+    width: 100%;
+  }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .pwa-modal-container {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .pwa-modal-header {
+    padding: 20px 20px 16px;
+  }
+  
+  .pwa-modal-body {
+    padding: 20px;
+  }
+  
+  .pwa-modal-footer {
+    padding: 16px 20px 20px;
+    flex-direction: column;
+  }
+  
+  .pwa-preview-window {
+    width: 160px;
+    height: 100px;
+  }
+}
