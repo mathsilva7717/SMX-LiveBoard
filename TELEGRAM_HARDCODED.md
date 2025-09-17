@@ -38,8 +38,8 @@ Os tokens estão fixos no arquivo `backend/index.js` na função `initializeTele
 
 ```javascript
 // 🔒 TOKENS HARDCODED - CONFIGURE AQUI
-const botToken = '8440265339:AAFPpah1EMPey3J5SvA5Fu3iK0NBhsep-qg';
-const chatId = '-4987412032';
+const botToken = 'SEU_TOKEN_AQUI';
+const chatId = 'SEU_CHAT_ID_AQUI';
 ```
 
 ### Como Alterar os Tokens
