@@ -1,0 +1,80 @@
+<svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradiente principal futurista -->
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#16213e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f0f0f;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para elementos ativos -->
+    <linearGradient id="activeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0099cc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0066aa;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para elementos secundários -->
+    <linearGradient id="secondaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff88;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#00cc66;stop-opacity:0.6" />
+    </linearGradient>
+    
+    <!-- Gradiente para elementos de rede -->
+    <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:0.7" />
+      <stop offset="100%" style="stop-color:#ff4757;stop-opacity:0.5" />
+    </linearGradient>
+    
+    <!-- Filtro de brilho -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Fundo principal -->
+  <rect width="72" height="72" fill="url(#mainGradient)" rx="9"/>
+  
+  <!-- Círculos de radar -->
+  <circle cx="36" cy="36" r="30" fill="none" stroke="url(#activeGradient)" stroke-width="0.8" opacity="0.3"/>
+  <circle cx="36" cy="36" r="22" fill="none" stroke="url(#activeGradient)" stroke-width="0.6" opacity="0.4"/>
+  <circle cx="36" cy="36" r="15" fill="none" stroke="url(#activeGradient)" stroke-width="0.5" opacity="0.5"/>
+  
+  <!-- Linhas de radar -->
+  <line x1="36" y1="6" x2="36" y2="66" stroke="url(#activeGradient)" stroke-width="0.6" opacity="0.3"/>
+  <line x1="6" y1="36" x2="66" y2="36" stroke="url(#activeGradient)" stroke-width="0.6" opacity="0.3"/>
+  <line x1="12" y1="12" x2="60" y2="60" stroke="url(#activeGradient)" stroke-width="0.4" opacity="0.2"/>
+  <line x1="60" y1="12" x2="12" y2="60" stroke="url(#activeGradient)" stroke-width="0.4" opacity="0.2"/>
+  
+  <!-- Centro do radar -->
+  <circle cx="36" cy="36" r="3" fill="url(#activeGradient)" filter="url(#glow)"/>
+  
+  <!-- Pontos de dados -->
+  <circle cx="45" cy="27" r="1.5" fill="url(#secondaryGradient)" filter="url(#glow)"/>
+  <circle cx="27" cy="45" r="1.5" fill="url(#secondaryGradient)" filter="url(#glow)"/>
+  <circle cx="52" cy="45" r="1" fill="url(#networkGradient)" filter="url(#glow)"/>
+  <circle cx="20" cy="27" r="1" fill="url(#networkGradient)" filter="url(#glow)"/>
+  
+  <!-- Linhas de conexão -->
+  <path d="M 36 36 L 45 27" stroke="url(#secondaryGradient)" stroke-width="0.8" opacity="0.6" filter="url(#glow)"/>
+  <path d="M 36 36 L 27 45" stroke="url(#secondaryGradient)" stroke-width="0.8" opacity="0.6" filter="url(#glow)"/>
+  <path d="M 45 27 L 52 45" stroke="url(#networkGradient)" stroke-width="0.6" opacity="0.5" filter="url(#glow)"/>
+  <path d="M 27 45 L 20 27" stroke="url(#networkGradient)" stroke-width="0.6" opacity="0.5" filter="url(#glow)"/>
+  
+  <!-- Interface holográfica -->
+  <rect x="9" y="9" width="54" height="3" fill="url(#activeGradient)" opacity="0.2" rx="1.5"/>
+  <rect x="9" y="60" width="54" height="3" fill="url(#activeGradient)" opacity="0.2" rx="1.5"/>
+  <rect x="9" y="9" width="3" height="54" fill="url(#activeGradient)" opacity="0.2" rx="1.5"/>
+  <rect x="60" y="9" width="3" height="54" fill="url(#activeGradient)" opacity="0.2" rx="1.5"/>
+  
+  <!-- Elementos de análise -->
+  <rect x="15" y="15" width="12" height="1.5" fill="url(#secondaryGradient)" opacity="0.7" rx="0.8"/>
+  <rect x="45" y="15" width="12" height="1.5" fill="url(#secondaryGradient)" opacity="0.7" rx="0.8"/>
+  <rect x="15" y="55" width="12" height="1.5" fill="url(#secondaryGradient)" opacity="0.7" rx="0.8"/>
+  <rect x="45" y="55" width="12" height="1.5" fill="url(#secondaryGradient)" opacity="0.7" rx="0.8"/>
+</svg>

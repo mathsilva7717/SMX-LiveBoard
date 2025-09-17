@@ -1,233 +1,420 @@
 # 🚀 SMX LiveBoard
 
-> **Dashboard de monitoramento de sistema em tempo real com interface moderna e funcionalidades avançadas**
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PWA](https://img.shields.io/badge/PWA-Ready-purple.svg)](https://web.dev/progressive-web-apps/)
+[![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Version](https://img.shields.io/badge/Version-1.0.0-orange.svg)](package.json)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D16.0.0-green.svg)](https://nodejs.org/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/smx/liveboard)
-[![Open Source](https://img.shields.io/badge/Open%20Source-✅-brightgreen.svg)](https://github.com/smx/liveboard)
+> **Dashboard de monitoramento de sistema em tempo real** com interface web moderna, design futurista e funcionalidades avançadas para administradores de sistema e desenvolvedores.
 
-## ✨ O que é o SMX LiveBoard?
+## 📸 Screenshots
 
-O **SMX LiveBoard** é um dashboard moderno e intuitivo para monitoramento de sistemas em tempo real. Ele oferece uma interface limpa e funcionalidades avançadas para administradores de sistema, desenvolvedores e entusiastas de tecnologia.
+![SMX LiveBoard Dashboard](https://via.placeholder.com/800x400/1a1a2e/ffffff?text=SMX+LiveBoard+Dashboard)
+*Interface principal com métricas em tempo real*
 
-## 🎯 Principais Funcionalidades
+![Terminal Integrado](https://via.placeholder.com/800x300/16213e/ffffff?text=Terminal+Integrado)
+*Terminal integrado para execução de comandos*
+
+![Conexões SSH](https://via.placeholder.com/800x300/0f3460/ffffff?text=Conex%C3%B5es+SSH)
+*Gerenciamento de conexões SSH remotas*
+
+## 🚀 Características Principais
 
 ### 📊 **Monitoramento em Tempo Real**
-- **CPU**: Uso, temperatura, cores ativos
-- **Memória**: RAM utilizada, disponível, histórico
-- **Disco**: Espaço usado, velocidade de leitura/escrita
-- **Rede**: Latência, status de conexão, throughput
+- **CPU**: Uso, temperatura, frequência, cores
+- **Memória**: RAM, swap, cache, buffers
+- **Disco**: Espaço, I/O, velocidade de leitura/escrita
+- **Rede**: Tráfego, conexões, interfaces
+- **Processos**: Lista completa com filtros e busca
+- **Sistema**: Uptime, usuários, versão do OS
 
-### 🤖 **Integração com Telegram**
-- Alertas automáticos quando recursos estão altos
-- Relatórios de status personalizados
-- Notificações de comandos executados
-- Mensagens formatadas com emojis e negrito
+### 🖥️ **Interface Moderna**
+- **Design futurista** com tema escuro
+- **Responsiva** para desktop, tablet e mobile
+- **Gráficos interativos** com Chart.js
+- **Atualizações em tempo real** via WebSocket
+- **PWA** - Instalável como app nativo
+- **Temas** (dark/light mode)
 
-### 💻 **Terminal Integrado**
-- Execução segura de comandos do sistema
-- Histórico de comandos
-- Validação de segurança (comandos perigosos bloqueados)
-- Suporte para Windows e Linux
+### ⚡ **Funcionalidades Avançadas**
+- **Terminal integrado** para execução de comandos
+- **Conexões SSH** para servidores remotos
+- **Notificações Telegram** para alertas
+- **Sistema de logs** estruturado e avançado
+- **Exportação de dados** em JSON/CSV
+- **Configurações personalizáveis**
 
-### 🔐 **Conexões SSH**
-- Conecte-se a servidores remotos
-- Execute comandos em múltiplas máquinas
-- Gerenciamento de conexões ativas
-- Autenticação por senha ou chave privada
+### 🔧 **Recursos Técnicos**
+- **Cache inteligente** para otimização
+- **Throttling** para evitar sobrecarga
+- **Intervalos adaptativos** baseados na performance
+- **Sistema de fallback** para alta disponibilidade
+- **Logs estruturados** com níveis configuráveis
 
-### 📈 **Gráficos e Histórico**
-- Visualização de dados históricos
-- Gráficos interativos e responsivos
-- Exportação de dados
-- Análise de tendências
+## 🛠️ Stack Tecnológica
 
-### 🖥️ **Aplicativo Desktop**
-- Interface nativa multiplataforma
-- Notificações do sistema
-- Inicialização automática
-- Instalador profissional
+### **Backend**
+- **Node.js 18+** - Runtime JavaScript
+- **Express.js** - Framework web
+- **Socket.IO** - Comunicação em tempo real
+- **SystemInformation** - Coleta de dados do sistema
+- **SSH2** - Conexões SSH seguras
+- **Morgan** - Logging HTTP
+- **Helmet** - Segurança
+- **CORS** - Cross-origin resource sharing
 
-## 🛠️ Tecnologias Utilizadas
+### **Frontend**
+- **HTML5** - Estrutura semântica
+- **CSS3** - Estilos modernos com variáveis
+- **JavaScript ES6+** - Lógica da aplicação
+- **Chart.js** - Gráficos interativos
+- **WebSocket** - Comunicação em tempo real
+- **PWA** - Service Worker e Manifest
 
-| Tecnologia | Descrição |
-|------------|-----------|
-| **Node.js** | Backend e API REST |
-| **Express** | Framework web |
-| **Socket.io** | Comunicação em tempo real |
-| **Electron** | Aplicativo desktop |
-| **HTML5/CSS3** | Interface moderna |
-| **JavaScript** | Lógica frontend |
-| **System Information** | Coleta de dados do sistema |
+### **Ferramentas**
+- **Electron** - Aplicativo desktop
+- **Nodemon** - Desenvolvimento
+- **Electron Builder** - Build e distribuição
 
-## 🚀 Instalação Rápida
+## 📋 Pré-requisitos
 
-### Pré-requisitos
-- Node.js 16+ 
-- npm ou yarn
-- Git
+- **Node.js 18+** ([Download](https://nodejs.org/))
+- **NPM** (vem com Node.js)
+- **Git** ([Download](https://git-scm.com/))
+- **Sistema Operacional**: Windows 10+, macOS 10.15+, Ubuntu 18.04+
 
-### 1. Clone o repositório
+## ⚡ Instalação Rápida
+
+### 1. **Clone o Repositório**
 ```bash
-git clone https://github.com/smx/liveboard.git
-cd liveboard
+git clone https://github.com/mathsilva7717/SMX-LiveBoard.git
+cd SMX-LiveBoard
 ```
 
-### 2. Instale as dependências
+### 2. **Instale as Dependências**
 ```bash
 npm install
 ```
 
-### 3. Configure o ambiente (opcional)
+### 3. **Inicie o Servidor**
 ```bash
-# Copie o arquivo de configuração
-cp config.env.example config.env
-
-# Edite as configurações se necessário
-nano config.env
-```
-
-### 4. Execute o projeto
-```bash
-# Modo desenvolvimento
-npm run dev
-
-# Modo produção
 npm start
 ```
 
-### 5. Acesse o dashboard
-Abra seu navegador em: `http://localhost:3000`
-
-## 📱 Como Usar
-
-### Monitoramento Básico
-1. **Inicie o aplicativo** - O dashboard carrega automaticamente
-2. **Visualize os dados** - CPU, RAM, Disk e Network em tempo real
-3. **Configure alertas** - Defina limites para notificações
-
-### Integração com Telegram
-1. **Crie um bot** - Use @BotFather no Telegram
-2. **Configure no dashboard** - Adicione token e chat ID
-3. **Receba alertas** - Notificações automáticas quando recursos estão altos
-
-### Terminal Integrado
-1. **Acesse a aba Terminal** - Interface segura de comandos
-2. **Execute comandos** - Digite comandos do sistema
-3. **Visualize histórico** - Todos os comandos ficam salvos
-
-### Conexões SSH
-1. **Adicione servidor** - Host, usuário e senha/chave
-2. **Conecte** - Estabeleça conexão segura
-3. **Execute remotamente** - Comandos em servidores remotos
-
-## ⚙️ Configuração Avançada
-
-### Variáveis de Ambiente
-```env
-# Servidor
-NODE_ENV=production
-PORT=3000
-
-# Monitoramento
-METRICS_INTERVAL=10000
-PROCESSES_INTERVAL=60000
-
-# Telegram (opcional)
-TELEGRAM_BOT_TOKEN=seu_bot_token
-TELEGRAM_CHAT_ID=seu_chat_id
-
-# Segurança
-CORS_ORIGIN=*
-LOG_LEVEL=info
+### 4. **Acesse no Navegador**
+```
+http://localhost:3000
 ```
 
-### Build para Desktop
+## 🎯 Uso Detalhado
+
+### **Dashboard Principal**
+1. **Métricas do Sistema**: Visualize CPU, memória, disco e rede em tempo real
+2. **Gráficos Interativos**: Clique nos gráficos para detalhes
+3. **Filtros**: Use os filtros para focar em métricas específicas
+4. **Exportação**: Clique em "Exportar" para baixar dados
+
+### **Terminal Integrado**
+1. **Acesse a aba "Terminal"**
+2. **Digite comandos** como em um terminal normal
+3. **Execute scripts** e comandos do sistema
+4. **Visualize saída** em tempo real
+
+### **Conexões SSH**
+1. **Configure conexão** na aba "SSH"
+2. **Adicione servidor**: IP, porta, usuário, senha/chave
+3. **Conecte** e execute comandos remotamente
+4. **Gerencie múltiplas conexões**
+
+### **Notificações Telegram**
+1. **Configure bot** no Telegram
+2. **Adicione token** nas configurações
+3. **Defina alertas** para métricas específicas
+4. **Receba notificações** em tempo real
+
+## 🛠️ Scripts Disponíveis
+
 ```bash
-# Windows
-npm run build:win
+# Desenvolvimento
+npm start              # Inicia servidor de produção
+npm run dev            # Modo desenvolvimento com nodemon
 
-# macOS
-npm run build:mac
+# Electron (Desktop)
+npm run electron       # Inicia app desktop
+npm run electron:dev   # Modo desenvolvimento
 
-# Linux
-npm run build:linux
+# Build e Distribuição
+npm run build          # Build do projeto
+npm run build:win      # Build para Windows
+npm run build:mac      # Build para macOS
+npm run build:linux    # Build para Linux
+npm run build:portable # Build portável Windows
+npm run dist           # Build completo + distribuição
+
+# Testes
+npm test               # Executa testes (em desenvolvimento)
 ```
 
-## 📸 Screenshots
+## 📁 Estrutura do Projeto
 
-> *Screenshots serão adicionados em breve*
+```
+SMX-LiveBoard/
+├── 📁 backend/                    # Servidor Node.js
+│   ├── 📁 services/              # Serviços principais
+│   │   ├── 📄 monitorService.js  # Monitoramento do sistema
+│   │   ├── 📄 sshService.js      # Conexões SSH
+│   │   ├── 📄 telegramService.js # Notificações Telegram
+│   │   ├── 📄 terminalService.js # Terminal integrado
+│   │   └── 📄 logsService.js     # Sistema de logs
+│   ├── 📁 utils/                 # Utilitários
+│   │   ├── 📄 logger.js          # Sistema de logging
+│   │   └── 📄 httpLogger.js      # Logs HTTP
+│   ├── 📁 logs/                  # Arquivos de log
+│   ├── 📄 index.js               # Servidor principal
+│   └── 📄 config.json            # Configurações
+├── 📁 js/                        # Frontend JavaScript
+│   ├── 📄 app.js                 # Aplicação principal
+│   ├── 📄 logs.js                # Gerenciamento de logs
+│   ├── 📄 ssh.js                 # Interface SSH
+│   └── 📄 pwa-install.js         # Instalação PWA
+├── 📁 styles/                    # Estilos CSS
+│   ├── 📄 main.css               # Estilos principais
+│   └── 📄 pwa-modal.css          # Modal PWA
+├── 📁 assets/                    # Recursos estáticos
+│   ├── 📄 favicon.svg            # Favicon
+│   ├── 📄 icon-*.svg             # Ícones PWA
+│   └── 📄 ...                    # Outros ícones
+├── 📄 index.html                 # Página principal
+├── 📄 manifest.json              # Manifest PWA
+├── 📄 sw.js                      # Service Worker
+├── 📄 browserconfig.xml          # Configuração IE/Edge
+├── 📄 package.json               # Dependências e scripts
+└── 📄 README.md                  # Este arquivo
+```
+
+## 🔧 Configuração Avançada
+
+### **Arquivo de Configuração** (`backend/config.json`)
+
+```json
+{
+  "processMonitoring": {
+    "maxHistoryPoints": 20,        // Pontos de histórico
+    "defaultLimit": 10,            // Limite padrão de processos
+    "updateInterval": 5000,        // Intervalo de atualização (ms)
+    "fallbackEnabled": true        // Sistema de fallback
+  },
+  "systemInformation": {
+    "timeout": 10000,              // Timeout para coleta (ms)
+    "retries": 3                   // Tentativas de retry
+  },
+  "logging": {
+    "level": "info",               // Nível de log (debug, info, warn, error)
+    "enableFileLogging": true      // Logs em arquivo
+  }
+}
+```
+
+### **Variáveis de Ambiente** (`.env`)
+
+```bash
+# Servidor
+PORT=3000
+NODE_ENV=production
+
+# Telegram
+TELEGRAM_BOT_TOKEN=seu_token_aqui
+TELEGRAM_CHAT_ID=seu_chat_id_aqui
+
+# SSH
+SSH_TIMEOUT=30000
+SSH_RETRIES=3
+
+# Logs
+LOG_LEVEL=info
+LOG_FILE_PATH=./logs/system.log
+```
+
+**⚠️ Importante**: 
+- Copie o arquivo `env.example` para `.env`
+- **NUNCA** commite o arquivo `.env` no Git
+- Mantenha seus tokens seguros
+
+## 📡 APIs Disponíveis
+
+### **Sistema**
+- `GET /api/system/metrics` - Métricas do sistema
+- `GET /api/system/info` - Informações do sistema
+- `GET /api/system/uptime` - Tempo de atividade
+
+### **Processos**
+- `GET /api/processes` - Lista de processos
+- `GET /api/processes/:pid` - Processo específico
+- `POST /api/processes/:pid/kill` - Finalizar processo
+
+### **Logs**
+- `GET /api/logs` - Logs do sistema
+- `GET /api/logs/:level` - Logs por nível
+- `DELETE /api/logs` - Limpar logs
+
+### **Terminal**
+- `POST /api/terminal/execute` - Executar comando
+- `GET /api/terminal/history` - Histórico de comandos
+
+### **SSH**
+- `POST /api/ssh/connect` - Conectar SSH
+- `POST /api/ssh/execute` - Executar comando SSH
+- `DELETE /api/ssh/disconnect` - Desconectar SSH
+
+### **Telegram**
+- `POST /api/telegram/send` - Enviar mensagem
+- `GET /api/telegram/status` - Status da conexão
+
+## 🚀 Roadmap de Desenvolvimento
+
+O SMX LiveBoard está em constante evolução! Consulte nosso [Roadmap](ROADMAP.md) para ver as próximas funcionalidades:
+
+### **Fase 1: Multi-Host** 🚀
+- Monitoramento de múltiplos servidores
+- Dashboard centralizado
+- Comparação entre hosts
+
+### **Fase 1.5: Melhorias Core** 🎨
+- Interface mais responsiva
+- Temas (dark/light mode)
+- Configurações avançadas
+
+### **Fase 2: App Desktop** 🖥️
+- Aplicativo Electron
+- Notificações nativas
+- Tray icon
+
+### **Fase 3: App Mobile** 📱
+- App React Native
+- Notificações push
+- Widgets
+
+### **Fase 4: Extensões** 🌐
+- Extensões de navegador
+- Widget na nova aba
+- Badge com status
+
+### **Fase 5: API Pública** 🔌
+- API REST completa
+- Webhooks
+- SDK para JavaScript
 
 ## 🤝 Contribuindo
 
-Contribuições são sempre bem-vindas! Veja nosso [Guia de Contribuição](CONTRIBUTING.md) para mais detalhes.
+Contribuições são muito bem-vindas! O SMX LiveBoard é um projeto open source e precisa da sua ajuda para crescer.
 
-### Como contribuir:
+### **Como Contribuir**
+
 1. **Fork** o projeto
-2. **Crie** uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** para a branch (`git push origin feature/AmazingFeature`)
-5. **Abra** um Pull Request
+2. **Clone** seu fork: `git clone https://github.com/SEU_USUARIO/SMX-LiveBoard.git`
+3. **Crie** uma branch: `git checkout -b feature/nova-feature`
+4. **Desenvolva** sua feature
+5. **Teste** suas alterações
+6. **Commit** seguindo o padrão: `git commit -m "feat: adiciona nova funcionalidade"`
+7. **Push** para sua branch: `git push origin feature/nova-feature`
+8. **Abra** um Pull Request
 
-## 🐛 Reportando Bugs
+### **Padrões de Código**
 
-Encontrou um bug? Abra uma [issue](https://github.com/smx/liveboard/issues) com:
-- Descrição detalhada do problema
-- Passos para reproduzir
-- Screenshots (se aplicável)
-- Informações do sistema
+- **JavaScript**: Use ES6+ e async/await
+- **CSS**: Use classes semânticas e variáveis CSS
+- **Commits**: Use conventional commits (feat, fix, docs, style, refactor, test)
+- **Nomes de arquivos**: Use kebab-case (ex: `user-service.js`)
+- **Funções**: Use camelCase (ex: `getUserData()`)
 
-## 💡 Sugerindo Features
+### **Primeiros Passos**
 
-Tem uma ideia? Abra uma [issue](https://github.com/smx/liveboard/issues) com:
-- Descrição da feature
-- Casos de uso
-- Benefícios esperados
+Procurando por onde começar? Procure por issues marcadas com:
+- `good first issue` - Ideal para iniciantes
+- `help wanted` - Precisa de ajuda
+- `documentation` - Melhorias na documentação
 
-## 📋 Roadmap
-
-- [ ] **v1.1**: Suporte a Docker
-- [ ] **v1.2**: Dashboard mobile
-- [ ] **v1.3**: Integração com Slack
-- [ ] **v1.4**: Alertas por email
-- [ ] **v1.5**: API pública
+📖 **[Guia completo de contribuição →](CONTRIBUTING.md)**
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+```
+MIT License
+
+Copyright (c) 2024 Matheus Silva
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## 🆘 Suporte e Contato
+
+### **Desenvolvedor Principal**
+- **Nome**: Matheus Silva
+- **Email**: [matheus.silva1097@gmail.com](mailto:matheus.silva1097@gmail.com)
+- **Telefone**: [+55 13 99709-6178](https://wa.me/5513997096178)
+- **GitHub**: [@mathsilva7717](https://github.com/mathsilva7717)
+- **LinkedIn**: [Matheus Silva](https://www.linkedin.com/in/mathsilvass)
+
+### **Canais de Suporte**
+- **GitHub Issues**: Para bugs e sugestões
+- **GitHub Discussions**: Para ideias e discussões
+- **Email**: Suporte direto por email
+- **WhatsApp**: Suporte rápido por mensagem
+
+### **Documentação**
+- **[Guia de Contribuição](CONTRIBUTING.md)** - Como contribuir
+- **[Roadmap](ROADMAP.md)** - Próximas funcionalidades
+- **[Sistema de Coleta](SYSTEM_COLLECTION_README.md)** - Arquitetura técnica
 
 ## 🙏 Agradecimentos
 
-- [System Information](https://github.com/sebhildebrandt/systeminformation) - Coleta de dados do sistema
-- [Socket.io](https://socket.io/) - Comunicação em tempo real
-- [Electron](https://www.electronjs.org/) - Framework desktop
-- [Express](https://expressjs.com/) - Framework web
+### **Bibliotecas e Ferramentas**
+- [**systeminformation**](https://github.com/sebastian-hofmann/systeminformation) - Coleta de dados do sistema
+- [**Socket.IO**](https://socket.io/) - Comunicação em tempo real
+- [**Express.js**](https://expressjs.com/) - Framework web
+- [**Chart.js**](https://www.chartjs.org/) - Gráficos interativos
+- [**Electron**](https://www.electronjs.org/) - Aplicativo desktop
+- [**SSH2**](https://github.com/mscdex/ssh2) - Conexões SSH
 
-## 👨‍💻 Autor
-
-**Matheus Silva** - Desenvolvedor Full Stack
-
-- 🔗 **LinkedIn**: [@mathsilvass](https://www.linkedin.com/in/mathsilvass)
-- 📧 **Email**: matheus.silva1097@gmail.com
-- 🐙 **GitHub**: [@mathsilvass](https://github.com/mathsilvass)
-
-## 📞 Suporte
-
-- **GitHub Issues**: [Reportar problemas](https://github.com/smx/liveboard/issues)
-- **LinkedIn**: [Matheus Silva](https://www.linkedin.com/in/mathsilvass)
-- **Email**: matheus.silva1097@gmail.com
-- **Documentação**: [Wiki do projeto](https://github.com/smx/liveboard/wiki)
+### **Comunidade**
+- **Contribuidores** que ajudam a melhorar o projeto
+- **Usuários** que reportam bugs e sugerem melhorias
+- **Comunidade open source** pelo suporte e inspiração
 
 ---
 
-<div align="center">
+## 🌟 **Star o Projeto**
 
-**⭐ Se este projeto te ajudou, considere dar uma estrela! ⭐**
+Se o SMX LiveBoard foi útil para você, considere dar uma ⭐ no GitHub! Isso ajuda muito o projeto a crescer e chegar a mais pessoas.
 
-[![GitHub stars](https://img.shields.io/github/stars/smx/liveboard?style=social)](https://github.com/smx/liveboard/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/smx/liveboard?style=social)](https://github.com/smx/liveboard/network)
+## 🔄 **Atualizações**
 
-**Feito com ❤️ por [Matheus Silva](https://www.linkedin.com/in/mathsilvass)**
+Mantenha-se atualizado com as últimas funcionalidades:
+- **Watch** o repositório no GitHub
+- **Follow** [@mathsilva7717](https://github.com/mathsilva7717) para updates
+- **Subscribe** nas discussions para novidades
 
-</div>
+---
+
+**Desenvolvido por [Matheus Silva](https://github.com/mathsilva7717)**
+
+*SMX LiveBoard - Monitoramento de sistema feito simples e poderoso* 🚀

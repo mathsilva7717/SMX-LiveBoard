@@ -8,16 +8,20 @@ const STATIC_FILES = [
   '/',
   '/index.html',
   '/styles/main.css',
+  '/styles/pwa-modal.css',
   '/js/app.js',
   '/js/logs.js',
   '/js/ssh.js',
+  '/js/pwa-install.js',
   '/manifest.json',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png',
-  '/assets/icon-144.png',
-  '/assets/icon-96.png',
-  '/assets/icon-72.png',
-  '/assets/icon-48.png'
+  '/browserconfig.xml',
+  '/assets/icon-192.svg',
+  '/assets/icon-512.svg',
+  '/assets/icon-144.svg',
+  '/assets/icon-96.svg',
+  '/assets/icon-72.svg',
+  '/assets/icon-48.svg',
+  '/assets/favicon.svg'
 ];
 
 // Instalar Service Worker

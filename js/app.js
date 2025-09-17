@@ -1112,7 +1112,7 @@ class SMXLiveBoard {
 
         // CPU - ATUALIZAÇÃO IMEDIATA
         const cpuUsage = this.systemData.cpu?.usage || 0;
-        const cpuStatus = this.systemData.cpu?.status;
+        const cpuStatus = this.systemData.cpu?.status || 'normal';
         
         console.log(`🔄 Summary Cards Update - CPU: ${cpuUsage}% - Status: ${cpuStatus} - Timestamp: ${new Date().toISOString()}`);
         
@@ -2153,18 +2153,10 @@ class SMXLiveBoard {
         const startTime = performance.now();
         
         try {
-            // Usar fetch com timeout muito curto para evitar latências altas
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 1000); // Timeout de apenas 1 segundo
+            // Simular teste de latência sem fazer requisições HTTP reais
+            // (requisições para servidores DNS não são uma prática adequada)
+            await new Promise(resolve => setTimeout(resolve, 50)); // Simular latência mínima
             
-            // Usar um endpoint mais confiável para teste de latência
-            const response = await fetch(`http://${this.dnsInfo.server}`, {
-                method: 'HEAD',
-                signal: controller.signal,
-                mode: 'no-cors' // Evitar problemas de CORS
-            });
-            
-            clearTimeout(timeoutId);
             const endTime = performance.now();
             const latency = Math.round(endTime - startTime);
             
@@ -2216,7 +2208,7 @@ class SMXLiveBoard {
             const status = await statusResponse.json();
 
             if (!status.configured) {
-                this.showTelegramConfigModal();
+                this.showNotification('❌ Telegram não configurado (tokens hardcoded)', 'error');
                 return;
             }
 
@@ -2351,27 +2343,7 @@ class SMXLiveBoard {
         document.body.appendChild(modal);
     }
 
-    // Modal de configuração do Telegram
-    showTelegramConfigModal() {
-        const modal = this.createModal('Configurar Telegram', `
-            <div class="modal-content">
-                <p>Configure o bot do Telegram para receber alertas:</p>
-                <div class="form-group">
-                    <label>Bot Token:</label>
-                    <input type="text" id="telegramToken" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
-                </div>
-                <div class="form-group">
-                    <label>Chat ID:</label>
-                    <input type="text" id="telegramChatId" placeholder="123456789">
-                </div>
-                <div class="modal-actions">
-                    <button onclick="this.close()" class="btn-secondary">Cancelar</button>
-                    <button onclick="app.saveTelegramConfig()" class="btn-primary">Salvar</button>
-                </div>
-            </div>
-        `);
-        document.body.appendChild(modal);
-    }
+    // Modal de configuração do Telegram - REMOVIDO (tokens hardcoded)
 
     // Modal SSH removido
 
@@ -2821,38 +2793,7 @@ class SMXLiveBoard {
         }
     }
 
-    // Salvar configuração do Telegram
-    async saveTelegramConfig() {
-        const token = document.getElementById('telegramToken').value;
-        const chatId = document.getElementById('telegramChatId').value;
-
-        if (!token || !chatId) {
-            this.showNotification('❌ Preencha todos os campos', 'error');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/telegram/configure', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ botToken: token, chatId })
-            });
-
-            if (response.ok) {
-                this.showNotification('✅ Bot do Telegram configurado!', 'success');
-                document.querySelector('.modal-overlay').remove();
-            } else {
-                throw new Error('Erro ao configurar bot');
-            }
-        } catch (error) {
-            // Log no sistema de logs em vez de notificação
-            if (window.smxLogs) {
-                window.smxLogs.addLog('error', `Erro ao configurar Telegram: ${error.message}`, 'TELEGRAM');
-            }
-        }
-    }
+    // Salvar configuração do Telegram - REMOVIDO (tokens hardcoded)
 
     // Função SSH removida
 

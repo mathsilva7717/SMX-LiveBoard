@@ -325,29 +325,32 @@ class LogsService extends EventEmitter {
   }
 
   // Monitorar logs em tempo real
-  startRealTimeMonitoring(socket) {
+  startRealTimeMonitoring(ws) {
     const onLog = (logEntry) => {
-      if (socket && socket.connected) {
-        socket.emit('logs:realtime', logEntry);
+      if (ws.readyState === 1) { // WebSocket.OPEN
+        ws.send(JSON.stringify({
+          type: 'log',
+          data: logEntry
+        }));
       }
     };
 
     this.on('log', onLog);
 
-    // Armazenar referência para poder remover depois
-    socket._logsListener = onLog;
+    // Armazenar referência para poder parar depois
+    ws._logListener = onLog;
 
-    // Remover listener quando socket desconectar
-    socket.on('disconnect', () => {
-      this.stopRealTimeMonitoring(socket);
+    // Remover listener quando WebSocket fechar
+    ws.on('close', () => {
+      this.removeListener('log', onLog);
     });
   }
 
   // Parar monitoramento em tempo real
-  stopRealTimeMonitoring(socket) {
-    if (socket && socket._logsListener) {
-      this.removeListener('log', socket._logsListener);
-      delete socket._logsListener;
+  stopRealTimeMonitoring(ws) {
+    if (ws._logListener) {
+      this.removeListener('log', ws._logListener);
+      delete ws._logListener;
     }
   }
 }

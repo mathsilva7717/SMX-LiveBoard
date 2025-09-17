@@ -1,0 +1,16 @@
+{
+  "processMonitoring": {
+    "maxHistoryPoints": 20,
+    "defaultLimit": 10,
+    "updateInterval": 5000,
+    "fallbackEnabled": true
+  },
+  "systemInformation": {
+    "timeout": 10000,
+    "retries": 3
+  },
+  "logging": {
+    "level": "info",
+    "enableFileLogging": true
+  }
+}

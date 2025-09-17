@@ -1,243 +1,296 @@
-# 🤝 Guia de Contribuição
+# 🚀 SMX LiveBoard - Guia de Contribuição
 
-Obrigado por considerar contribuir com o SMX LiveBoard! Este documento fornece diretrizes para contribuir com o projeto.
+## 📋 Visão Geral
 
-## 📋 Índice
+O SMX LiveBoard é um dashboard de monitoramento de sistema em tempo real. Este documento apresenta como contribuir e as oportunidades de desenvolvimento disponíveis.
 
-- [Código de Conduta](#código-de-conduta)
-- [Como Contribuir](#como-contribuir)
-- [Configuração do Ambiente](#configuração-do-ambiente)
-- [Padrões de Código](#padrões-de-código)
-- [Reportando Bugs](#reportando-bugs)
-- [Sugerindo Features](#sugerindo-features)
-- [Pull Requests](#pull-requests)
-
-## 📜 Código de Conduta
-
-Este projeto segue o [Código de Conduta do Contributor Covenant](https://www.contributor-covenant.org/). Ao participar, você concorda em manter este código.
-
-## 🚀 Como Contribuir
-
-### 1. Fork e Clone
-
-```bash
-# Fork o repositório no GitHub
-# Clone seu fork
-git clone https://github.com/SEU_USUARIO/liveboard.git
-cd liveboard
-```
-
-### 2. Configurar o Ambiente
-
-```bash
-# Instalar dependências
-npm run install:all
-
-# Executar em desenvolvimento
-npm run dev
-```
-
-### 3. Criar uma Branch
-
-```bash
-git checkout -b feature/nome-da-feature
-# ou
-git checkout -b fix/nome-do-bug
-```
-
-### 4. Fazer Mudanças
-
-- Faça suas alterações
-- Teste localmente
-- Siga os padrões de código
-
-### 5. Commit e Push
-
-```bash
-git add .
-git commit -m "feat: adiciona nova funcionalidade X"
-git push origin feature/nome-da-feature
-```
-
-### 6. Pull Request
-
-- Abra um Pull Request no GitHub
-- Descreva suas mudanças
-- Aguarde revisão
-
-## 🛠️ Configuração do Ambiente
+## 🛠️ Setup do Ambiente
 
 ### Pré-requisitos
-
-- Node.js 16+
-- npm ou yarn
+- Node.js 18+
 - Git
+- Conhecimento em JavaScript
 
-### Instalação
+### Como Rodar Localmente
 
+1. **Clone o repositório:**
 ```bash
-# Clone o repositório
-git clone https://github.com/smx/liveboard.git
-cd liveboard
+git clone https://github.com/mathsilva7717/SMX-LiveBoard.git
+cd SMX-LiveBoard
+```
 
-# Instale dependências
-npm run install:all
+2. **Instale as dependências:**
+```bash
+npm install
+```
 
-# Execute em desenvolvimento
-npm run dev
+3. **Configure as variáveis de ambiente:**
+```bash
+# Copie o template de configuração
+cp env.example .env
+
+# Edite o arquivo .env com suas configurações
+# IMPORTANTE: Configure pelo menos TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID
+```
+
+4. **Inicie o servidor:**
+```bash
+npm start
+```
+
+5. **Acesse no navegador:**
+```
+http://localhost:3000
 ```
 
 ### Estrutura do Projeto
-
 ```
 SMX-LiveBoard/
-├── frontend/          # React App
-├── backend/           # Node.js Server
-├── electron/          # Electron Main Process
-├── assets/            # Recursos do build
-└── docs/              # Documentação
+├── backend/           # Servidor Node.js
+│   ├── services/      # Serviços (SSH, Monitor, etc.)
+│   ├── utils/         # Utilitários e logs
+│   └── index.js       # Servidor principal
+├── js/               # Frontend JavaScript
+│   ├── app.js        # Aplicação principal
+│   ├── logs.js       # Gerenciamento de logs
+│   └── ssh.js        # Interface SSH
+├── styles/           # CSS
+├── assets/           # Ícones e imagens
+└── index.html        # Página principal
 ```
 
-## 📝 Padrões de Código
+## 🎯 Oportunidades de Desenvolvimento
 
-### JavaScript/TypeScript
+*Seguindo a ordem do [Roadmap](ROADMAP.md)*
 
-- Use ESLint e Prettier
-- Siga as convenções do projeto
-- Comente código complexo
-- Use nomes descritivos
+### 1. 🚀 **Fase 1: Multi-Host**
 
-### React
+**Descrição:** Monitorar múltiplos servidores simultaneamente.
 
-- Use functional components
-- Hooks preferidos sobre classes
-- Props tipadas quando possível
-- Componentes pequenos e focados
+**Benefícios:**
+- Visão centralizada
+- Comparação entre hosts
+- Alertas consolidados
 
-### CSS
+**Tecnologias:** Node.js, WebSocket, SQLite
 
-- Use classes descritivas
-- Evite IDs quando possível
-- Mobile-first approach
-- Use variáveis CSS
+**Tarefas:**
+- [ ] Interface para adicionar hosts
+- [ ] Sistema de conexões múltiplas
+- [ ] Dashboard com múltiplos hosts
+- [ ] Comparação de métricas
+- [ ] Sistema de autenticação básico
+- [ ] Configuração via arquivo JSON/YAML
+- [ ] Testes de conectividade
+- [ ] Gerenciamento de conexões ativas
 
-### Commits
-
-Use [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat: adiciona nova funcionalidade
-fix: corrige bug
-docs: atualiza documentação
-style: formatação de código
-refactor: refatoração
-test: adiciona testes
-chore: tarefas de manutenção
-```
-
-## 🐛 Reportando Bugs
-
-### Antes de Reportar
-
-1. Verifique se já existe uma issue
-2. Teste na versão mais recente
-3. Verifique a documentação
-
-### Template de Bug Report
-
-```markdown
-**Descrição**
-Descrição clara do bug.
-
-**Passos para Reproduzir**
-1. Vá para '...'
-2. Clique em '...'
-3. Veja o erro
-
-**Comportamento Esperado**
-O que deveria acontecer.
-
-**Screenshots**
-Se aplicável, adicione screenshots.
-
-**Informações do Sistema**
-- OS: [ex: Windows 10]
-- Versão: [ex: 1.0.0]
-- Node.js: [ex: 16.14.0]
-
-**Logs**
-Adicione logs relevantes.
-```
-
-## 💡 Sugerindo Features
-
-### Antes de Sugerir
-
-1. Verifique se já existe uma issue
-2. Considere se é realmente necessário
-3. Pense em casos de uso
-
-### Template de Feature Request
-
-```markdown
-**Feature**
-Descrição clara da feature.
-
-**Problema**
-Qual problema isso resolve?
-
-**Solução Proposta**
-Como você imagina que deveria funcionar?
-
-**Alternativas**
-Outras soluções consideradas.
-
-**Contexto Adicional**
-Qualquer contexto adicional.
-```
-
-## 🔄 Pull Requests
-
-### Checklist
-
-- [ ] Código segue padrões do projeto
-- [ ] Testes passam
-- [ ] Documentação atualizada
-- [ ] Commits seguem convenção
-- [ ] PR tem descrição clara
-
-### Processo de Revisão
-
-1. **Revisão Automática**: CI/CD verifica código
-2. **Revisão Manual**: Mantenedores revisam
-3. **Feedback**: Discussão e melhorias
-4. **Merge**: Aprovação e merge
-
-### Tamanho do PR
-
-- **Pequeno**: < 200 linhas
-- **Médio**: 200-500 linhas
-- **Grande**: > 500 linhas (discutir antes)
-
-## 🏷️ Labels
-
-- `bug`: Algo não está funcionando
-- `enhancement`: Nova feature ou melhoria
-- `documentation`: Melhorias na documentação
-- `good first issue`: Bom para iniciantes
-- `help wanted`: Precisa de ajuda
-- `question`: Mais informações necessárias
-
-## 📞 Suporte
-
-- **GitHub Issues**: Para bugs e features
-- **Discussions**: Para perguntas gerais
-- **Email**: smx@example.com
-
-## 🙏 Agradecimentos
-
-Obrigado por contribuir! Cada contribuição, por menor que seja, faz a diferença.
+**Complexidade:** ⭐⭐⭐ (Média)
 
 ---
 
-**Lembre-se**: Este é um projeto open source mantido por voluntários. Seja paciente e respeitoso com todos os contribuidores.
+### 2. 🎨 **Fase 1.5: Melhorias Core**
+
+**Descrição:** Melhorias na interface e funcionalidades básicas.
+
+**Benefícios:**
+- Interface mais moderna
+- Melhor experiência do usuário
+- Funcionalidades essenciais
+- **Sistema de segurança implementado**
+
+**Tecnologias:** HTML5, CSS3, JavaScript ES6+
+
+**Tarefas:**
+- [ ] Interface mais responsiva
+- [ ] Temas (dark/light mode)
+- [ ] Configurações avançadas
+- [ ] Logs mais detalhados
+- [ ] Filtros e busca nos logs
+- [ ] Exportação de dados
+- [ ] Configurações de notificação
+- [x] **Sistema de variáveis de ambiente** (✅ Concluído)
+- [x] **Configuração segura de tokens** (✅ Concluído)
+- [x] **Arquivo .gitignore completo** (✅ Concluído)
+- [x] **Template de configuração (.env.example)** (✅ Concluído)
+
+**Complexidade:** ⭐⭐ (Baixa)
+
+---
+
+### 3. 🖥️ **Fase 2: App Desktop**
+
+**Descrição:** Aplicativo desktop nativo com Electron.
+
+**Benefícios:**
+- Notificações do sistema
+- Acesso offline
+- Auto-atualização
+- Tray icon
+
+**Tecnologias:** Electron.js, Node.js
+
+**Tarefas:**
+- [ ] App Electron
+- [ ] Notificações nativas
+- [ ] Instaladores (Windows/Mac/Linux)
+- [ ] Tray icon com status
+- [ ] Atalhos de teclado
+- [ ] Auto-start com sistema
+- [ ] Modo sempre visível
+- [ ] Configurações do app
+
+**Complexidade:** ⭐⭐⭐ (Média)
+
+---
+
+### 4. 📱 **Fase 3: App Mobile**
+
+**Descrição:** App Android/iOS para monitoramento móvel.
+
+**Benefícios:**
+- Monitoramento remoto
+- Notificações push
+- Widgets
+- Interface nativa
+
+**Tecnologias:** React Native, Node.js
+
+**Tarefas:**
+- [ ] App React Native
+- [ ] Interface responsiva
+- [ ] Notificações push
+- [ ] Widgets do sistema
+- [ ] Modo offline
+- [ ] Sincronização de dados
+
+**Complexidade:** ⭐⭐⭐⭐ (Alta)
+
+---
+
+### 5. 🌐 **Fase 4: Extensões**
+
+**Descrição:** Extensões para Chrome, Firefox e Edge.
+
+**Benefícios:**
+- Acesso rápido
+- Notificações do navegador
+- Widget na nova aba
+
+**Tecnologias:** JavaScript, WebExtensions API
+
+**Tarefas:**
+- [ ] Extensão Chrome
+- [ ] Extensão Firefox
+- [ ] Extensão Edge
+- [ ] Widget para nova aba
+- [ ] Badge com status
+- [ ] Notificações do navegador
+- [ ] Popup rápido
+- [ ] Integração com outros dashboards
+
+**Complexidade:** ⭐⭐ (Baixa)
+
+---
+
+### 6. 🔌 **Fase 5: API Pública**
+
+**Descrição:** API REST para integrações com outros sistemas.
+
+**Benefícios:**
+- Integração com outros sistemas
+- Automação
+- Webhooks
+- SDK disponível
+
+**Tecnologias:** Node.js, Express.js, JWT
+
+**Tarefas:**
+- [ ] API REST completa
+- [ ] Documentação da API
+- [ ] Autenticação via token
+- [ ] Rate limiting
+- [ ] Webhooks
+- [ ] SDK para JavaScript
+- [ ] Integração com Zapier
+- [ ] Métricas de uso da API
+
+**Complexidade:** ⭐⭐⭐ (Média)
+
+---
+
+## 🛠️ Como Contribuir
+
+### Processo de Contribuição
+
+1. **Fork do repositório**
+2. **Clone seu fork:**
+```bash
+git clone https://github.com/SEU_USUARIO/SMX-LiveBoard.git
+```
+3. **Crie uma branch:**
+```bash
+git checkout -b feature/nome-da-feature
+```
+4. **Desenvolva sua feature**
+5. **Teste suas alterações**
+6. **Commit seguindo o padrão:**
+```bash
+git commit -m "feat: adiciona nova funcionalidade"
+git commit -m "fix: corrige bug na interface"
+git commit -m "docs: atualiza documentação"
+```
+7. **Push para sua branch:**
+```bash
+git push origin feature/nome-da-feature
+```
+8. **Abra um Pull Request**
+
+### Padrões de Código
+
+- **JavaScript:** Use ES6+ e async/await
+- **CSS:** Use classes semânticas e variáveis CSS
+- **Commits:** Use conventional commits (feat, fix, docs, style, refactor, test)
+- **Nomes de arquivos:** Use kebab-case (ex: `user-service.js`)
+- **Funções:** Use camelCase (ex: `getUserData()`)
+
+### Como Testar
+
+1. **Teste manual:**
+   - Execute `npm start`
+   - Teste todas as funcionalidades
+   - Verifique em diferentes navegadores
+
+2. **Teste de conectividade:**
+   - Teste conexão SSH
+   - Verifique logs em tempo real
+   - Teste com diferentes sistemas
+
+3. **Teste de interface:**
+   - Verifique responsividade
+   - Teste temas (se aplicável)
+   - Verifique acessibilidade
+
+## 📞 Contato
+
+**Desenvolvedor Principal:**
+- **Nome:** Matheus Silva
+- **Email:** matheus.silva1097@gmail.com
+- **Telefone:** +55 13 99709-6178
+- **GitHub:** [@mathsilva7717](https://github.com/mathsilva7717)
+- **LinkedIn:** [Matheus Silva](https://www.linkedin.com/in/mathsilvass)
+
+**Para Contribuições:**
+- **GitHub Issues:** Para bugs e sugestões
+- **Discussions:** Para ideias e discussões
+- **Pull Requests:** Para contribuições de código
+
+### Primeiros Passos
+
+Procurando por onde começar? Procure por issues marcadas com:
+- `good first issue` - Ideal para iniciantes
+- `help wanted` - Precisa de ajuda
+- `documentation` - Melhorias na documentação
+
+---
+
+**Contribua e ajude a expandir o SMX LiveBoard! 🚀**

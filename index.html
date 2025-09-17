@@ -13,8 +13,26 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/main.css?v=20250115-9">
     <link rel="stylesheet" href="styles/pwa-modal.css?v=20250115-1">
-    <link rel="icon" href="assets/icon.ico">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="manifest" href="manifest.json">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="SMX LiveBoard">
+    <meta name="msapplication-TileColor" content="#1a1a1a">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="assets/icon-192.svg">
+    <link rel="apple-touch-icon" sizes="152x152" href="assets/icon-192.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icon-192.svg">
+    <link rel="apple-touch-icon" sizes="167x167" href="assets/icon-192.svg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" sizes="32x32" href="assets/favicon.svg">
+    <link rel="icon" type="image/svg+xml" sizes="16x16" href="assets/favicon.svg">
 </head>
 <body>
     <!-- Header -->
@@ -1008,5 +1026,20 @@
     <script src="js/ssh.js?v=20250115-1"></script>
     <script src="js/pwa-install.js?v=20250115-1"></script>
     <script src="js/app.js?v=20250115-4"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('✅ Service Worker registrado com sucesso:', registration);
+                    })
+                    .catch((error) => {
+                        console.error('❌ Erro ao registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

@@ -8,6 +8,7 @@ const compression = require('compression');
 const morgan = require('morgan');
 const path = require('path');
 const logger = require('./utils/logger');
+const HttpLogger = require('./utils/httpLogger');
 // Configurações padrão do sistema
 const config = {
     NODE_ENV: process.env.NODE_ENV || 'development',
@@ -97,6 +98,10 @@ class SMXLiveBoardServer {
         this.port = process.env.PORT || 3000;
         this.isProduction = process.env.NODE_ENV === 'production';
         
+        // Inicializar logger HTTP personalizado
+        this.httpLogger = new HttpLogger();
+        this.httpLogger.startCacheCleanup();
+        
         this.intervals = { metrics: null, processes: null, adaptive: null };
         this.lastMetricsSent = 0; // Throttling para evitar spam
         this.adaptiveConfig = {
@@ -182,7 +187,7 @@ class SMXLiveBoardServer {
         try {
             this.telegramService = new TelegramService();
             
-            // Configurar bot com dados fornecidos
+            // 🔒 TOKENS HARDCODED - CONFIGURE AQUI
             const botToken = '8440265339:AAFPpah1EMPey3J5SvA5Fu3iK0NBhsep-qg';
             const chatId = '-4987412032';
             
@@ -574,6 +579,25 @@ class SMXLiveBoardServer {
         });
     }
 
+    // Encurtar User Agent para logs
+    shortenUserAgent(userAgent) {
+        if (!userAgent || userAgent === 'Unknown') return 'Unknown';
+        
+        // Extrair navegador principal
+        if (userAgent.includes('Chrome')) return 'Chrome';
+        if (userAgent.includes('Firefox')) return 'Firefox';
+        if (userAgent.includes('Safari')) return 'Safari';
+        if (userAgent.includes('Edge')) return 'Edge';
+        if (userAgent.includes('Opera')) return 'Opera';
+        
+        // Se for muito longo, truncar
+        if (userAgent.length > 30) {
+            return userAgent.substring(0, 27) + '...';
+        }
+        
+        return userAgent;
+    }
+
     // Limpar recursos específicos de um socket
     cleanupSocketResources(socket) {
         try {
@@ -622,8 +646,11 @@ class SMXLiveBoardServer {
             }
         }));
         
-        // Morgan apenas em desenvolvimento para reduzir logs
-        if (!this.isProduction) {
+        // Usar logger HTTP personalizado em vez do Morgan
+        this.app.use(this.httpLogger.middleware());
+        
+        // Morgan apenas em desenvolvimento para logs adicionais (opcional)
+        if (!this.isProduction && process.env.ENABLE_MORGAN === 'true') {
             this.app.use(morgan('dev'));
         }
         
@@ -640,8 +667,12 @@ class SMXLiveBoardServer {
                 // Cache específico para diferentes tipos de arquivo
                 if (path.endsWith('.css') || path.endsWith('.js')) {
                     res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hora
-                } else if (path.endsWith('.ico') || path.endsWith('.png') || path.endsWith('.jpg')) {
+                } else if (path.endsWith('.ico') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.svg')) {
                     res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 dia
+                    // Definir tipo MIME correto para SVG
+                    if (path.endsWith('.svg')) {
+                        res.setHeader('Content-Type', 'image/svg+xml');
+                    }
                 }
             }
         };
@@ -669,10 +700,27 @@ class SMXLiveBoardServer {
         });
 
         this.app.get('/api/system/metrics', async (req, res) => {
+            const startTime = Date.now();
             try {
                 const metrics = await this.monitorService.getSystemInfo();
+                const duration = Date.now() - startTime;
+                
+                // Log de performance para métricas
+                logger.performance(`Métricas coletadas em ${duration}ms`, {
+                    duration,
+                    requestId: req.requestId,
+                    endpoint: '/api/system/metrics'
+                });
+                
                 res.json(metrics);
             } catch (error) {
+                const duration = Date.now() - startTime;
+                logger.error(`Erro ao coletar métricas: ${error.message}`, {
+                    duration,
+                    requestId: req.requestId,
+                    endpoint: '/api/system/metrics',
+                    error: error.message
+                });
                 res.status(500).json({ error: error.message });
             }
         });
@@ -864,13 +912,34 @@ class SMXLiveBoardServer {
         });
 
         this.app.get('/api/processes', async (req, res) => {
+            const startTime = Date.now();
             try {
                 if (!this.processMonitoring) {
+                    logger.warn('ProcessMonitoringService não inicializado', {
+                        requestId: req.requestId,
+                        endpoint: '/api/processes'
+                    });
                     return res.status(503).json({ error: 'ProcessMonitoringService ainda não inicializado' });
                 }
                 const processes = await this.processMonitoring.getTopProcesses();
+                const duration = Date.now() - startTime;
+                
+                logger.performance(`Processos coletados em ${duration}ms`, {
+                    duration,
+                    requestId: req.requestId,
+                    endpoint: '/api/processes',
+                    processCount: processes.length
+                });
+                
                 res.json(processes);
             } catch (error) {
+                const duration = Date.now() - startTime;
+                logger.error(`Erro ao coletar processos: ${error.message}`, {
+                    duration,
+                    requestId: req.requestId,
+                    endpoint: '/api/processes',
+                    error: error.message
+                });
                 res.status(500).json({ error: error.message });
             }
         });
@@ -1017,7 +1086,7 @@ class SMXLiveBoardServer {
             }
         });
 
-        // Telegram API
+        // Telegram API - Apenas APIs de uso (configuração removida - tokens hardcoded)
         this.app.get('/api/telegram/status', async (req, res) => {
             try {
                 if (!this.telegramService) {
@@ -1026,37 +1095,10 @@ class SMXLiveBoardServer {
                 const isConfigured = this.telegramService.isBotConfigured();
                 res.json({ 
                     configured: isConfigured,
-                    message: isConfigured ? 'Bot configurado' : 'Bot não configurado'
+                    message: isConfigured ? 'Bot configurado (tokens hardcoded)' : 'Bot não configurado'
                 });
             } catch (error) {
                 logger.error('Erro ao verificar status do Telegram:', error);
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.post('/api/telegram/configure', async (req, res) => {
-            try {
-                if (!this.telegramService) {
-                    return res.status(503).json({ error: 'TelegramService ainda não inicializado' });
-                }
-                const { token, chatId } = req.body;
-                
-                if (!token || !chatId) {
-                    return res.status(400).json({ error: 'Token e Chat ID são obrigatórios' });
-                }
-
-                const result = this.telegramService.configure(token, chatId);
-                
-                // Testar conexão
-                const testResult = await this.telegramService.testConnection();
-                
-                res.json({
-                    success: true,
-                    message: 'Bot configurado com sucesso',
-                    test: testResult
-                });
-            } catch (error) {
-                logger.error('Erro ao configurar Telegram:', error);
                 res.status(500).json({ error: error.message });
             }
         });
@@ -1231,7 +1273,14 @@ class SMXLiveBoardServer {
             // Verificar e limpar conexões duplicadas do mesmo cliente
             this.handleDuplicateConnections(socket, normalizedIP);
             
-            // Nova conexão estabelecida
+            // Log de conexão WebSocket
+            logger.websocket(`Nova conexão estabelecida`, {
+                socketId: socket.id,
+                clientIP: normalizedIP,
+                transport: transport,
+                userAgent: this.shortenUserAgent(userAgent),
+                totalConnections: this.io.sockets.sockets.size
+            });
             
             // Atualizar contador de clientes
             this.updateActiveClients();
@@ -1512,19 +1561,30 @@ class SMXLiveBoardServer {
                 // Log detalhado baseado no motivo da desconexão
                 const clientIP = socket.handshake.address || socket.conn.remoteAddress;
                 const normalizedIP = clientIP.replace(/^::ffff:/, '');
+                const userAgent = this.shortenUserAgent(socket.handshake.headers['user-agent']);
+                const connectionDuration = Date.now() - socket.handshake.time;
+                
+                const disconnectContext = {
+                    socketId: socket.id,
+                    clientIP: normalizedIP,
+                    userAgent: userAgent,
+                    reason: reason,
+                    connectionDuration: Math.round(connectionDuration / 1000) + 's',
+                    totalConnections: this.io.sockets.sockets.size
+                };
                 
                 if (reason === 'transport close') {
-                    logger.info(`Cliente desconectado: ${socket.id} (${normalizedIP}) - Fechamento de transporte`);
+                    logger.websocket(`Cliente desconectado - Fechamento de transporte`, disconnectContext);
                 } else if (reason === 'transport error') {
-                    logger.warn(`Cliente desconectado: ${socket.id} (${normalizedIP}) - Erro de transporte`);
+                    logger.warn(`Cliente desconectado - Erro de transporte`, disconnectContext);
                 } else if (reason === 'ping timeout') {
-                    logger.warn(`Cliente desconectado: ${socket.id} (${normalizedIP}) - Timeout de ping`);
+                    logger.warn(`Cliente desconectado - Timeout de ping`, disconnectContext);
                 } else if (reason === 'client namespace disconnect') {
                     // Log silencioso para desconexões normais
                 } else if (reason === 'server namespace disconnect') {
                     // Log silencioso para desconexões do servidor
                 } else {
-                    logger.info(`Cliente desconectado: ${socket.id} (${normalizedIP}) - ${reason}`);
+                    logger.websocket(`Cliente desconectado - ${reason}`, disconnectContext);
                 }
             });
 
@@ -1614,9 +1674,7 @@ class SMXLiveBoardServer {
             try {
                 const metrics = await this.monitorService.getSystemInfo();
                 
-                // Log removido - métricas silenciosas
-                
-                // Log de métricas se LogsService estiver disponível
+                // Log de métricas apenas se LogsService estiver disponível
                 if (this.logsService) {
                     // Log de alertas de CPU
                     if (metrics.cpu && metrics.cpu.usage > 80) {
@@ -1650,13 +1708,16 @@ class SMXLiveBoardServer {
                     // Throttling: evitar envios muito frequentes
                     const now = Date.now();
                     if (now - this.lastMetricsSent > 5000) { // Mínimo 5s entre envios
-                        // Log removido - envio silencioso
                         this.io.emit('system:metrics', metrics);
                         this.lastMetricsSent = now;
                     }
                 }
             } catch (error) {
-                logger.error('❌ Erro ao coletar métricas:', error.message);
+                logger.error('Erro ao coletar métricas do sistema', {
+                    error: error.message,
+                    stack: error.stack,
+                    type: 'metrics_collection'
+                });
                 
                 // Log de erro se LogsService estiver disponível
                 if (this.logsService) {
@@ -1677,7 +1738,12 @@ class SMXLiveBoardServer {
                     this.io.emit('processes:update', processesData.processes);
                 }
             } catch (error) {
-                console.error('❌ Erro ao coletar processos:', error.message);
+                logger.error('Erro ao coletar processos do sistema', {
+                    error: error.message,
+                    stack: error.stack,
+                    type: 'processes_collection'
+                });
+                
                 // Enviar dados vazios em caso de erro para manter o frontend funcionando
                 if (this.getUniqueClientsCount() > 0) {
                     this.io.emit('processes:update', { 

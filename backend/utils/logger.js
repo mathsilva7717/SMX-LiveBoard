@@ -7,6 +7,7 @@ class Logger {
         this.logLevel = process.env.LOG_LEVEL || 'info';
         this.logDir = path.join(__dirname, '..', 'logs');
         this.logFile = path.join(this.logDir, 'system.log');
+        this.isProduction = process.env.NODE_ENV === 'production';
         
         // Criar diretório de logs se não existir
         if (!fs.existsSync(this.logDir)) {
@@ -20,6 +21,55 @@ class Logger {
             info: 2,
             debug: 3
         };
+        
+        // Cores para terminal (apenas em desenvolvimento)
+        this.colors = {
+            reset: '\x1b[0m',
+            bright: '\x1b[1m',
+            dim: '\x1b[2m',
+            red: '\x1b[31m',
+            green: '\x1b[32m',
+            yellow: '\x1b[33m',
+            blue: '\x1b[34m',
+            magenta: '\x1b[35m',
+            cyan: '\x1b[36m',
+            white: '\x1b[37m',
+            gray: '\x1b[90m'
+        };
+        
+        // Cores por nível de log
+        this.levelColors = {
+            error: this.colors.red,
+            warn: this.colors.yellow,
+            info: this.colors.blue,
+            debug: this.colors.gray
+        };
+        
+        // Emojis por nível de log
+        this.levelEmojis = {
+            error: '❌',
+            warn: '⚠️',
+            info: 'ℹ️',
+            debug: '🔍'
+        };
+        
+        // Emojis especiais para tipos de log
+        this.typeEmojis = {
+            success: '✅',
+            failure: '❌',
+            startup: '🚀',
+            shutdown: '🛑',
+            connection: '🔗',
+            disconnection: '🔌',
+            metrics: '📊',
+            security: '🔒',
+            cleanup: '🧹',
+            performance: '⚡',
+            http: '🌐',
+            websocket: '🔌',
+            database: '🗄️',
+            api: '🔌'
+        };
     }
 
     // Verificar se o nível de log deve ser exibido
@@ -30,10 +80,31 @@ class Logger {
     // Formatar mensagem de log
     formatMessage(level, message, context = {}) {
         const timestamp = new Date().toISOString();
-        const contextStr = Object.keys(context).length > 0 ? 
-            ` | Context: ${JSON.stringify(context)}` : '';
+        const timeStr = new Date().toLocaleTimeString('pt-BR');
+        const dateStr = new Date().toLocaleDateString('pt-BR');
         
-        return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`;
+        // Determinar emoji baseado no tipo de contexto
+        let emoji = this.levelEmojis[level];
+        if (context.type && this.typeEmojis[context.type]) {
+            emoji = this.typeEmojis[context.type];
+        }
+        
+        // Formatar contexto
+        const contextStr = Object.keys(context).length > 0 ? 
+            ` | ${JSON.stringify(context)}` : '';
+        
+        // Formatação para arquivo (sem cores)
+        const fileMessage = `[${timestamp}] [${level.toUpperCase()}] ${emoji} ${message}${contextStr}`;
+        
+        // Formatação para console (com cores se não for produção)
+        let consoleMessage = fileMessage;
+        if (!this.isProduction) {
+            const color = this.levelColors[level] || this.colors.white;
+            const levelStr = level.toUpperCase().padEnd(5);
+            consoleMessage = `${this.colors.gray}[${dateStr} ${timeStr}]${this.colors.reset} ${color}[${levelStr}]${this.colors.reset} ${emoji} ${message}${this.colors.dim}${contextStr}${this.colors.reset}`;
+        }
+        
+        return { file: fileMessage, console: consoleMessage };
     }
 
     // Escrever no arquivo de log
@@ -49,8 +120,8 @@ class Logger {
     error(message, context = {}) {
         if (this.shouldLog('error')) {
             const formatted = this.formatMessage('error', message, context);
-            console.error(formatted);
-            this.writeToFile(formatted);
+            console.error(formatted.console);
+            this.writeToFile(formatted.file);
         }
     }
 
@@ -58,8 +129,8 @@ class Logger {
     warn(message, context = {}) {
         if (this.shouldLog('warn')) {
             const formatted = this.formatMessage('warn', message, context);
-            console.warn(formatted);
-            this.writeToFile(formatted);
+            console.warn(formatted.console);
+            this.writeToFile(formatted.file);
         }
     }
 
@@ -67,8 +138,8 @@ class Logger {
     info(message, context = {}) {
         if (this.shouldLog('info')) {
             const formatted = this.formatMessage('info', message, context);
-            console.info(formatted);
-            this.writeToFile(formatted);
+            console.info(formatted.console);
+            this.writeToFile(formatted.file);
         }
     }
 
@@ -76,8 +147,8 @@ class Logger {
     debug(message, context = {}) {
         if (this.shouldLog('debug')) {
             const formatted = this.formatMessage('debug', message, context);
-            console.debug(formatted);
-            this.writeToFile(formatted);
+            console.debug(formatted.console);
+            this.writeToFile(formatted.file);
         }
     }
 
@@ -119,6 +190,55 @@ class Logger {
     // Log de segurança
     security(message, context = {}) {
         this.warn(`🔒 ${message}`, { ...context, type: 'security' });
+    }
+
+    // Log de performance
+    performance(message, context = {}) {
+        this.info(`⚡ ${message}`, { ...context, type: 'performance' });
+    }
+
+    // Log HTTP
+    http(message, context = {}) {
+        this.info(`🌐 ${message}`, { ...context, type: 'http' });
+    }
+
+    // Log WebSocket
+    websocket(message, context = {}) {
+        this.info(`🔌 ${message}`, { ...context, type: 'websocket' });
+    }
+
+    // Log de API
+    api(message, context = {}) {
+        this.info(`🔌 ${message}`, { ...context, type: 'api' });
+    }
+
+    // Log de banco de dados
+    database(message, context = {}) {
+        this.info(`🗄️ ${message}`, { ...context, type: 'database' });
+    }
+
+    // Log estruturado com contexto rico
+    structured(level, message, context = {}) {
+        const enrichedContext = {
+            ...context,
+            timestamp: new Date().toISOString(),
+            pid: process.pid,
+            memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'
+        };
+
+        switch (level.toLowerCase()) {
+            case 'error':
+                this.error(message, enrichedContext);
+                break;
+            case 'warn':
+                this.warn(message, enrichedContext);
+                break;
+            case 'debug':
+                this.debug(message, enrichedContext);
+                break;
+            default:
+                this.info(message, enrichedContext);
+        }
     }
 
     // Limpar logs antigos

@@ -19,28 +19,26 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  animation: pwaBackdropFadeIn 0.3s ease-out;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
 }
 
 .pwa-modal-container {
   position: relative;
   width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
+  max-width: 400px;
+  max-height: 80vh;
   overflow: hidden;
-  animation: pwaModalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: pwaModalSlideIn 0.3s ease-out;
 }
 
 .pwa-modal-content {
   background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-  border: 1px solid rgba(0, 212, 255, 0.3);
-  border-radius: 20px;
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  border-radius: 16px;
   box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(0, 212, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(0, 212, 255, 0.1);
   overflow: hidden;
   position: relative;
 }
@@ -54,64 +52,61 @@
   height: 2px;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    #00d4ff 25%, 
-    #00ff88 50%, 
-    #ffaa00 75%, 
+    #00d4ff 50%, 
     transparent 100%);
-  animation: pwaGradientFlow 3s ease-in-out infinite;
+  animation: pwaGradientFlow 2s ease-in-out infinite;
 }
 
 /* Header do Modal */
 .pwa-modal-header {
   display: flex;
   align-items: center;
-  padding: 24px 24px 16px;
+  padding: 20px 20px 12px;
   border-bottom: 1px solid rgba(0, 212, 255, 0.2);
   position: relative;
 }
 
 .pwa-modal-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(135deg, #00d4ff, #0099cc);
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 16px;
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
-  animation: pwaIconPulse 2s ease-in-out infinite;
+  margin-right: 12px;
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.3);
 }
 
 .pwa-modal-icon svg {
   color: #000;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  width: 20px;
+  height: 20px;
 }
 
 .pwa-modal-title h2 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 600;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .pwa-modal-title p {
-  margin: 4px 0 0;
-  font-size: 0.9rem;
+  margin: 2px 0 0;
+  font-size: 0.85rem;
   color: #00d4ff;
   font-weight: 500;
 }
 
 .pwa-modal-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,61 +119,63 @@
   background: rgba(255, 71, 87, 0.2);
   border-color: #ff4757;
   color: #ff4757;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 /* Body do Modal */
 .pwa-modal-body {
-  padding: 24px;
+  padding: 20px;
 }
 
 .pwa-features {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .pwa-feature {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
-  padding: 12px;
+  margin-bottom: 12px;
+  padding: 10px;
   background: rgba(0, 212, 255, 0.05);
   border: 1px solid rgba(0, 212, 255, 0.1);
-  border-radius: 12px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .pwa-feature:hover {
   background: rgba(0, 212, 255, 0.1);
   border-color: rgba(0, 212, 255, 0.3);
-  transform: translateX(4px);
+  transform: translateX(2px);
 }
 
 .pwa-feature-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background: linear-gradient(135deg, #00ff88, #00cc66);
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
-  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+  margin-right: 10px;
+  box-shadow: 0 2px 6px rgba(0, 255, 136, 0.3);
 }
 
 .pwa-feature-icon svg {
   color: #000;
+  width: 16px;
+  height: 16px;
 }
 
 .pwa-feature-text h4 {
-  margin: 0 0 4px;
-  font-size: 1rem;
+  margin: 0 0 2px;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #fff;
 }
 
 .pwa-feature-text p {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #aaa;
 }
 
@@ -186,18 +183,18 @@
 .pwa-preview {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .pwa-preview-window {
-  width: 200px;
-  height: 120px;
+  width: 160px;
+  height: 100px;
   background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
   border: 1px solid rgba(0, 212, 255, 0.3);
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  animation: pwaPreviewFloat 3s ease-in-out infinite;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  animation: pwaPreviewFloat 2s ease-in-out infinite;
 }
 
 .pwa-preview-header {
@@ -278,24 +275,24 @@
 
 /* Footer do Modal */
 .pwa-modal-footer {
-  padding: 16px 24px 24px;
+  padding: 16px 20px 20px;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   border-top: 1px solid rgba(0, 212, 255, 0.2);
 }
 
 .pwa-btn {
   flex: 1;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border: none;
-  border-radius: 10px;
-  font-size: 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
@@ -308,8 +305,8 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.3s ease;
 }
 
 .pwa-btn:hover::before {
@@ -323,22 +320,22 @@
 }
 
 .pwa-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 .pwa-btn-primary {
   background: linear-gradient(135deg, #00d4ff, #0099cc);
   border: 1px solid #00d4ff;
   color: #000;
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.3);
 }
 
 .pwa-btn-primary:hover {
   background: linear-gradient(135deg, #00e5ff, #00aadd);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
 }
 
 .pwa-btn:active {
@@ -347,28 +344,13 @@
 
 /* Animações */
 @keyframes pwaModalFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes pwaBackdropFadeIn {
-  from {
-    backdrop-filter: blur(0px);
-    background: rgba(0, 0, 0, 0);
-  }
-  to {
-    backdrop-filter: blur(10px);
-    background: rgba(0, 0, 0, 0.8);
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes pwaModalSlideIn {
   from {
-    transform: translateY(-50px) scale(0.9);
+    transform: translateY(-20px) scale(0.95);
     opacity: 0;
   }
   to {
@@ -378,81 +360,52 @@
 }
 
 @keyframes pwaGradientFlow {
-  0%, 100% {
-    transform: translateX(-100%);
-  }
-  50% {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes pwaIconPulse {
-  0%, 100% {
-    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
-  }
-  50% {
-    box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
-  }
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
 }
 
 @keyframes pwaPreviewFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
 
 @keyframes pwaDotPulse {
-  0%, 100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 @keyframes pwaGaugeSpin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes pwaBarGrow {
-  0%, 100% {
-    width: 20%;
-  }
-  50% {
-    width: 100%;
-  }
+  0%, 100% { width: 30%; }
+  50% { width: 80%; }
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
   .pwa-modal-container {
     width: 95%;
-    margin: 20px;
+    margin: 10px;
   }
   
   .pwa-modal-header {
-    padding: 20px 20px 16px;
+    padding: 16px 16px 12px;
   }
   
   .pwa-modal-body {
-    padding: 20px;
+    padding: 16px;
   }
   
   .pwa-modal-footer {
-    padding: 16px 20px 20px;
+    padding: 12px 16px 16px;
     flex-direction: column;
   }
   
   .pwa-preview-window {
-    width: 160px;
-    height: 100px;
+    width: 140px;
+    height: 90px;
   }
 }

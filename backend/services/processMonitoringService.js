@@ -1,10 +1,44 @@
 const si = require('systeminformation');
 const psList = require('ps-list');
+const logger = require('../utils/logger');
+const path = require('path');
+const fs = require('fs');
 
 class ProcessMonitoringService {
     constructor() {
         this.processHistory = new Map();
-        this.maxHistoryPoints = 20;
+        this.config = this.loadConfig();
+        this.maxHistoryPoints = this.config.processMonitoring.maxHistoryPoints;
+    }
+
+    loadConfig() {
+        try {
+            const configPath = path.join(__dirname, '..', 'config.json');
+            if (fs.existsSync(configPath)) {
+                const configData = fs.readFileSync(configPath, 'utf8');
+                return JSON.parse(configData);
+            }
+        } catch (error) {
+            logger.warn('Erro ao carregar config.json, usando configurações padrão:', error.message);
+        }
+        
+        // Configurações padrão
+        return {
+            processMonitoring: {
+                maxHistoryPoints: 20,
+                defaultLimit: 10,
+                updateInterval: 5000,
+                fallbackEnabled: true
+            },
+            systemInformation: {
+                timeout: 10000,
+                retries: 3
+            },
+            logging: {
+                level: 'info',
+                enableFileLogging: true
+            }
+        };
     }
 
     async getTopProcesses(limit = 10) {
@@ -47,7 +81,7 @@ class ProcessMonitoringService {
                 timestamp: new Date().toISOString()
             };
         } catch (error) {
-            console.error('Erro ao coletar processos:', error);
+            logger.error('Erro ao coletar processos com systeminformation:', error.message);
             
             // Fallback usando ps-list
             try {
@@ -76,7 +110,7 @@ class ProcessMonitoringService {
                     timestamp: new Date().toISOString()
                 };
             } catch (fallbackError) {
-                console.error('Erro no fallback de processos:', fallbackError);
+                logger.error('Erro no fallback de processos:', fallbackError.message);
                 return {
                     processes: [],
                     totalCpu: 0,
@@ -208,7 +242,7 @@ class ProcessMonitoringService {
                 totalMemory: stats.list.reduce((sum, p) => sum + (p.mem_rss || 0), 0)
             };
         } catch (error) {
-            console.error('Erro ao obter estatísticas do sistema:', error);
+            logger.error('Erro ao obter estatísticas do sistema:', error.message);
             return {
                 totalProcesses: 0,
                 runningProcesses: 0,
