@@ -347,7 +347,7 @@ Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) par
 ```
 MIT License
 
-Copyright (c) 2024 Matheus Silva
+Copyright (c) 2025 Matheus Silva
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
