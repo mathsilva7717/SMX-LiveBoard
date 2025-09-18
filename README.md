@@ -1,4 +1,7 @@
 # 🚀 SMX LiveBoard
+<p align="center">
+  <img src="assets/logo.png" width="150" />
+</p>
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
