@@ -393,7 +393,6 @@ SOFTWARE.
 - [**Socket.IO**](https://socket.io/) - Comunicação em tempo real
 - [**Express.js**](https://expressjs.com/) - Framework web
 - [**Chart.js**](https://www.chartjs.org/) - Gráficos interativos
-- [**Electron**](https://www.electronjs.org/) - Aplicativo desktop
 - [**SSH2**](https://github.com/mscdex/ssh2) - Conexões SSH
 
 ### **Comunidade**
