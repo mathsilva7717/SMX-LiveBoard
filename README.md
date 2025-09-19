@@ -1,4 +1,4 @@
-# 🚀 SMX LiveBoard
+#  SMX LiveBoard
 <p align="center">
   <img src="assets/logo.png" width="150" />
 </p>
@@ -76,9 +76,7 @@
 - **PWA** - Service Worker e Manifest
 
 ### **Ferramentas**
-- **Electron** - Aplicativo desktop
 - **Nodemon** - Desenvolvimento
-- **Electron Builder** - Build e distribuição
 
 ## 📋 Pré-requisitos
 
